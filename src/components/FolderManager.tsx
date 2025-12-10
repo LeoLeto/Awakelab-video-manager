@@ -7,6 +7,7 @@ interface FolderManagerProps {
   onCreateFolder: (folderName: string) => Promise<void>;
   onRenameFolder: (oldName: string, newName: string) => Promise<void>;
   onDeleteFolder: (folderName: string) => Promise<void>;
+  loadingFolders: boolean;
 }
 
 export const FolderManager = ({
@@ -16,6 +17,7 @@ export const FolderManager = ({
   onCreateFolder,
   onRenameFolder,
   onDeleteFolder,
+  loadingFolders,
 }: FolderManagerProps) => {
   const [isCreating, setIsCreating] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
@@ -113,7 +115,10 @@ export const FolderManager = ({
       )}
 
       <div className="folder-list">
-        {folders.map((folder) => (
+        {loadingFolders ? (
+          <div className="loading-folders">⏳ Loading folders...</div>
+        ) : (
+          folders.map((folder) => (
           <div
             key={folder}
             className={`folder-item ${currentFolder === folder ? 'active' : ''}`}
@@ -183,7 +188,8 @@ export const FolderManager = ({
               </>
             )}
           </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );

@@ -4,8 +4,9 @@
   box-sizing: border-box;
 }
 
-html, body {
-  width: 100%;
+html,
+body {
+  width     : 100%;
   overflow-x: hidden;
 }
 
@@ -55,7 +56,7 @@ body {
 
 /* Sidebar */
 .sidebar {
-  width         : 280px;
+  width         : 320px;
   background    : white;
   border-radius : 12px;
   padding       : 1.5rem;
@@ -152,6 +153,15 @@ body {
   padding-right : 0.5rem;
 }
 
+.loading-folders {
+  display        : flex;
+  align-items    : center;
+  justify-content: center;
+  padding        : 2rem;
+  color          : #999;
+  font-size      : 0.9rem;
+}
+
 .folder-item {
   display      : flex;
   align-items  : center;
@@ -179,19 +189,19 @@ body {
 }
 
 .folder-name {
-  font-weight: 500;
-  color      : inherit;
-  flex       : 1;
-  min-width  : 0;
-  overflow   : hidden;
+  font-weight  : 500;
+  color        : inherit;
+  flex         : 1;
+  min-width    : 0;
+  overflow     : hidden;
   text-overflow: ellipsis;
 }
 
 .folder-actions {
-  display    : flex;
-  gap        : 0.25rem;
-  opacity    : 0;
-  transition : opacity 0.2s;
+  display   : flex;
+  gap       : 0.25rem;
+  opacity   : 0;
+  transition: opacity 0.2s;
 }
 
 .folder-item:hover .folder-actions,

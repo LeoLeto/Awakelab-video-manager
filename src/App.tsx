@@ -8,12 +8,20 @@ import './App.css';
 
 function App() {
   const [videos, setVideos] = useState<VideoFile[]>([]);
+  const [videoCache, setVideoCache] = useState<Map<string, VideoFile[]>>(new Map());
   const [folders, setFolders] = useState<string[]>(['Uncategorized']);
   const [currentFolder, setCurrentFolder] = useState('Uncategorized');
   const [loading, setLoading] = useState(false);
+  const [loadingFolders, setLoadingFolders] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadVideos = async () => {
+  const loadVideos = async (forceRefresh: boolean = false) => {
+    // Check cache first
+    if (!forceRefresh && videoCache.has(currentFolder)) {
+      setVideos(videoCache.get(currentFolder)!);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
@@ -29,6 +37,9 @@ function App() {
       });
       
       setVideos(filteredVideos);
+      
+      // Update cache
+      setVideoCache(prev => new Map(prev).set(currentFolder, filteredVideos));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load videos');
     } finally {
@@ -37,11 +48,14 @@ function App() {
   };
 
   const loadFolders = async () => {
+    setLoadingFolders(true);
     try {
       const folderList = await getAllFolders();
       setFolders(folderList);
     } catch (err) {
       console.error('Failed to load folders:', err);
+    } finally {
+      setLoadingFolders(false);
     }
   };
 
@@ -54,14 +68,14 @@ function App() {
   }, []);
 
   const handleUploadSuccess = () => {
-    loadVideos();
+    loadVideos(true); // Force refresh after upload
     loadFolders();
   };
 
   const handleDelete = async (key: string) => {
     try {
       await deleteVideoFromS3(key);
-      loadVideos();
+      loadVideos(true); // Force refresh after delete
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete video');
     }
@@ -81,6 +95,7 @@ function App() {
       await createFolder(folderName);
       await loadFolders();
       setCurrentFolder(folderName);
+      // New folder will be empty, no need to fetch
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create folder');
     }
@@ -95,6 +110,17 @@ function App() {
     try {
       await renameFolder(oldName, newName);
       await loadFolders();
+      
+      // Update cache: move old folder's cache to new name
+      setVideoCache(prev => {
+        const newCache = new Map(prev);
+        if (newCache.has(oldName)) {
+          newCache.set(newName, newCache.get(oldName)!);
+          newCache.delete(oldName);
+        }
+        return newCache;
+      });
+      
       if (currentFolder === oldName) {
         setCurrentFolder(newName);
       }
@@ -107,6 +133,14 @@ function App() {
     try {
       await deleteFolder(folderName);
       await loadFolders();
+      
+      // Clear cache for deleted folder
+      setVideoCache(prev => {
+        const newCache = new Map(prev);
+        newCache.delete(folderName);
+        return newCache;
+      });
+      
       if (currentFolder === folderName) {
         setCurrentFolder('Uncategorized');
       }
@@ -131,6 +165,7 @@ function App() {
             onCreateFolder={handleCreateFolder}
             onRenameFolder={handleRenameFolder}
             onDeleteFolder={handleDeleteFolder}
+            loadingFolders={loadingFolders}
           />
         </aside>
 
