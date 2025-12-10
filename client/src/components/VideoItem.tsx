@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { VideoFile } from '../services/s3Service';
+import type { VideoFile } from '../services/apiService';
 
 interface VideoItemProps {
   video: VideoFile;

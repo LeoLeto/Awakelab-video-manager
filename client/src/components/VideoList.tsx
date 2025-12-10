@@ -1,4 +1,4 @@
-import type { VideoFile } from '../services/s3Service';
+import type { VideoFile } from '../services/apiService';
 import { VideoItem } from './VideoItem';
 
 interface VideoListProps {
