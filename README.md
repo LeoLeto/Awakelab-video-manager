@@ -1,30 +1,82 @@
-﻿# Video Manager - AWS S3 Integration
+﻿# Awakelab Video Manager
 
-A React-based video file manager that allows users to upload videos to AWS S3, organize them in folders, and manage their video library.
+A full-stack video management application with AWS S3 integration and folder organization.
+
+## Project Structure
+
+```
+awakelab-video-manager/
+├── client/          # React + TypeScript frontend
+└── server/          # Express.js backend API
+```
+
+## Quick Start
+
+### Prerequisites
+- Node.js 20+
+- AWS S3 bucket configured
+- AWS credentials with S3 access
+
+### Development Setup
+
+1. **Clone the repository**
+```bash
+git clone https://github.com/LeoLeto/Awakelab-video-manager.git
+cd Awakelab-video-manager
+```
+
+2. **Setup Backend**
+```bash
+cd server
+npm install
+cp .env.example .env
+# Edit .env with your AWS credentials
+npm run dev
+```
+
+3. **Setup Frontend** (in a new terminal)
+```bash
+cd client
+npm install
+cp .env.example .env
+# Edit .env with VITE_API_URL=http://localhost:3001/api
+npm run dev
+```
+
+4. **Open browser**
+   - Frontend: http://localhost:5173
+   - Backend API: http://localhost:3001
 
 ## Features
 
--  **Video Upload**: Upload videos directly to AWS S3 bucket
--  **Folder Management**: Create and organize videos in folders
--  **Embed URLs**: Copy video URLs for embedding in video players
--  **Delete Videos**: Remove videos from S3 with confirmation
--  **Responsive Design**: Works on desktop and mobile devices
--  **Fast & Efficient**: Built with React and TypeScript
+- 📁 Folder organization for videos
+- ⬆️ Video upload with progress tracking
+- 🗑️ Delete videos and folders
+- ✏️ Rename folders
+- 📋 Copy embed URLs
+- 💾 Smart caching for instant folder switching
+- 🔒 Secure AWS credentials on backend
 
-## Prerequisites
+## Production Deployment
 
-Before running this application, you need:
+See detailed deployment instructions in:
+- Frontend: See SETUP.md
+- Backend: `server/README.md`
 
-1. **AWS Account** with S3 access
-2. **AWS S3 Bucket** created and configured
-3. **AWS IAM User** with the following permissions:
-   - s3:PutObject, s3:GetObject, s3:DeleteObject, s3:ListBucket
+## Tech Stack
 
-## Installation
+### Frontend
+- React 18
+- TypeScript
+- Vite
+- REST API client
 
-Copy .env.example to .env and add your AWS credentials.
+### Backend
+- Node.js
+- Express.js
+- AWS SDK v3
+- Multer for file uploads
 
-Run: npm install
-Run: npm run dev
+## License
 
-See full documentation in the project files.
+MIT

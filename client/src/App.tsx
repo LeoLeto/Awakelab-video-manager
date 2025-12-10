@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { VideoUploader } from './components/VideoUploader';
 import { FolderManager } from './components/FolderManager';
 import { VideoList } from './components/VideoList';
-import { listVideosFromS3, deleteVideoFromS3, getAllFolders, createFolder, deleteFolder, renameFolder } from './services/s3Service';
-import type { VideoFile } from './services/s3Service';
+import { listVideosFromS3, deleteVideoFromS3, getAllFolders, createFolder, deleteFolder, renameFolder } from './services/apiService';
+import type { VideoFile } from './services/apiService';
 import './App.css';
 
 function App() {

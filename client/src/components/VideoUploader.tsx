@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { uploadVideoToS3 } from '../services/s3Service';
+import { uploadVideoToS3 } from '../services/apiService';
 
 interface VideoUploaderProps {
   currentFolder: string;
