@@ -44,7 +44,7 @@ export const VideoItem = ({ video, onDelete }: VideoItemProps) => {
         </h4>
         <p className="video-size">{formatFileSize(video.size)}</p>
         <p className="video-date">
-          {new Date(video.lastModified).toLocaleDateString()}
+          {video.lastModified ? new Date(video.lastModified).toLocaleDateString() : 'Unknown date'}
         </p>
       </div>
 
