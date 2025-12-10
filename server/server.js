@@ -46,7 +46,7 @@ app.get('/api/folders', async (req, res) => {
     if (response.CommonPrefixes) {
       response.CommonPrefixes.forEach((prefix) => {
         const folderName = prefix.Prefix?.replace('/', '');
-        if (folderName) {
+        if (folderName && folderName !== 'Uncategorized') {
           folders.push(folderName);
         }
       });
