@@ -1,18 +1,43 @@
-# Quick Start Guide - Video Manager
+# Development Setup Guide
 
-## Step 1: Configure AWS Credentials
+This project is split into two parts: **client** (frontend) and **server** (backend API).
 
-1. Copy the example environment file:
-   ```
+## Step 1: Configure Backend (Server)
+
+1. Navigate to the server directory and copy the example environment file:
+   ```bash
+   cd server
    cp .env.example .env
    ```
 
-2. Edit `.env` and fill in your AWS credentials:
-   - `VITE_AWS_REGION` - Your AWS region (e.g., eu-west-3)
-   - `VITE_AWS_BUCKET_NAME` - Your S3 bucket name
-   - `VITE_AWS_ACCESS_KEY_ID` - Your AWS access key
-   - `VITE_AWS_SECRET_ACCESS_KEY` - Your AWS secret key
-   - `VITE_AWS_CUSTOM_DOMAIN` - (Optional) Custom domain for serving files (e.g., media.awakelab.world)
+2. Edit `server/.env` and fill in your AWS credentials:
+   - `AWS_REGION` - Your AWS region (e.g., eu-west-3)
+   - `AWS_S3_BUCKET` - Your S3 bucket name
+   - `AWS_ACCESS_KEY_ID` - Your AWS access key
+   - `AWS_SECRET_ACCESS_KEY` - Your AWS secret key
+   - `CLOUDFRONT_DOMAIN` - (Optional) Custom domain for serving files (e.g., media.awakelab.world)
+   - `PORT` - Server port (default: 3001)
+
+3. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+## Step 2: Configure Frontend (Client)
+
+1. Navigate to the client directory and copy the example environment file:
+   ```bash
+   cd ../client
+   cp .env.example .env
+   ```
+
+2. Edit `client/.env`:
+   - `VITE_API_URL` - Backend API URL (for development: http://localhost:3001/api)
+
+3. Install dependencies:
+   ```bash
+   npm install
+   ```
 
 ## Step 2: Set Up AWS S3 Bucket
 
@@ -53,11 +78,21 @@
 
 ## Step 3: Run the Application
 
-```bash
-npm run dev
-```
+1. Start the backend server (in `server/` directory):
+   ```bash
+   cd server
+   npm run dev
+   ```
+   Server will run on http://localhost:3001
 
-Open http://localhost:5173 in your browser.
+2. In a new terminal, start the frontend (in `client/` directory):
+   ```bash
+   cd client
+   npm run dev
+   ```
+   Frontend will run on http://localhost:5173
+
+3. Open http://localhost:5173 in your browser.
 
 ## Step 4: Test the Features
 
@@ -83,11 +118,10 @@ Open http://localhost:5173 in your browser.
 - Check CORS configuration
 - Ensure region matches in `.env`
 
-## Next Steps
+## Production Deployment
 
-For production deployment:
-1. Set up AWS Cognito for authentication
-2. Use temporary credentials via AWS STS
-3. Implement backend API for S3 operations
-4. Use signed URLs for secure access
-5. Enable CloudFront for CDN delivery
+For production deployment on EC2 or other servers, see `server/README.md` for detailed instructions on:
+- Setting up PM2 for the backend
+- Configuring Nginx as a reverse proxy
+- SSL certificate setup with Let's Encrypt
+- Environment variable configuration

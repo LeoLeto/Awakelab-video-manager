@@ -49,22 +49,23 @@ export const VideoItem = ({ video, onDelete }: VideoItemProps) => {
       </div>
 
       <div className="video-actions">
-        <button
-          className="copy-url-btn"
-          onClick={handleCopyUrl}
-          title="Copy embed URL"
-        >
-          {copied ? '✓ Copied!' : '📋 Copy URL'}
-        </button>
-
         {!showDeleteConfirm ? (
-          <button
-            className="delete-btn"
-            onClick={() => setShowDeleteConfirm(true)}
-            title="Delete video"
-          >
-            🗑️ Delete
-          </button>
+          <>
+            <button
+              className="copy-url-btn"
+              onClick={handleCopyUrl}
+              title="Copy embed URL"
+            >
+              {copied ? '✓ Copied!' : '📋 Copy URL'}
+            </button>
+            <button
+              className="delete-btn"
+              onClick={() => setShowDeleteConfirm(true)}
+              title="Delete video"
+            >
+              🗑️ Delete
+            </button>
+          </>
         ) : (
           <div className="delete-confirm">
             <button className="confirm-delete" onClick={handleDelete}>
