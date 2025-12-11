@@ -52,12 +52,6 @@ export const FolderManager = ({
     return parts[parts.length - 1];
   };
 
-  // Helper function to get parent path
-  const getParentPath = (folderPath: string) => {
-    const parts = folderPath.split('/');
-    return parts.slice(0, -1).join('/');
-  };
-
   // Helper function to check if folder should be visible
   const isFolderVisible = (folderPath: string) => {
     if (KEEP_ALL_EXPANDED) return true; // Show all folders when expanded mode is on
