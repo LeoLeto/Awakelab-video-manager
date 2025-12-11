@@ -82,6 +82,25 @@ export const deleteVideoFromS3 = async (key: string): Promise<void> => {
   }
 };
 
+export const renameVideo = async (key: string, newName: string): Promise<{ newKey: string; url: string }> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/videos/${encodeURIComponent(key)}/rename`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ newName }),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to rename video');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error renaming video:', error);
+    throw error;
+  }
+};
+
 export const getAllFolders = async (): Promise<string[]> => {
   try {
     const response = await fetch(`${API_BASE_URL}/folders`);

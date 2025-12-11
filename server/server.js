@@ -172,6 +172,59 @@ app.delete('/api/videos/:key(*)', async (req, res) => {
   }
 });
 
+// Rename video
+app.put('/api/videos/:key(*)/rename', async (req, res) => {
+  try {
+    const oldKey = decodeURIComponent(req.params.key);
+    const { newName } = req.body;
+
+    console.log('=== RENAME VIDEO DEBUG ===');
+    console.log('Raw req.params.key:', req.params.key);
+    console.log('Decoded oldKey:', oldKey);
+    console.log('New name:', newName);
+
+    if (!newName) {
+      return res.status(400).json({ error: 'New name is required' });
+    }
+
+    // Build new key with same folder path but new filename
+    const keyParts = oldKey.split('/');
+    keyParts[keyParts.length - 1] = newName;
+    const newKey = keyParts.join('/');
+
+    console.log('New key will be:', newKey);
+    console.log('CopySource will be:', `${BUCKET_NAME}/${oldKey}`);
+
+    // Copy to new key (CopySource must be URL-encoded)
+    const copyCommand = new CopyObjectCommand({
+      Bucket: BUCKET_NAME,
+      CopySource: encodeURIComponent(`${BUCKET_NAME}/${oldKey}`),
+      Key: newKey,
+    });
+
+    await s3Client.send(copyCommand);
+    console.log('Copy successful');
+
+    // Delete old key
+    const deleteCommand = new DeleteObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: oldKey,
+    });
+
+    await s3Client.send(deleteCommand);
+    console.log('Delete successful');
+
+    res.json({ 
+      success: true, 
+      newKey,
+      url: `https://${CLOUDFRONT_DOMAIN}/${encodeURIComponent(newKey).replace(/%2F/g, '/')}`
+    });
+  } catch (error) {
+    console.error('Error renaming video:', error);
+    res.status(500).json({ error: 'Failed to rename video', details: error.message });
+  }
+});
+
 // Create folder
 app.post('/api/folders', async (req, res) => {
   try {

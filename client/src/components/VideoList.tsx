@@ -4,10 +4,11 @@ import { VideoItem } from './VideoItem';
 interface VideoListProps {
   videos: VideoFile[];
   onDelete: (key: string) => void;
+  onRename: () => void;
   loading: boolean;
 }
 
-export const VideoList = ({ videos, onDelete, loading }: VideoListProps) => {
+export const VideoList = ({ videos, onDelete, onRename, loading }: VideoListProps) => {
   if (loading) {
     return (
       <div className="video-list">
@@ -31,7 +32,7 @@ export const VideoList = ({ videos, onDelete, loading }: VideoListProps) => {
     <div className="video-list">
       <div className="video-grid">
         {videos.map((video) => (
-          <VideoItem key={video.key} video={video} onDelete={onDelete} />
+          <VideoItem key={video.key} video={video} onDelete={onDelete} onRename={onRename} />
         ))}
       </div>
     </div>
