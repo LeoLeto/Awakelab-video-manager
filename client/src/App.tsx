@@ -6,7 +6,7 @@ import { listVideosFromS3, deleteVideoFromS3, getAllFolders, createFolder, delet
 import type { VideoFile } from './services/apiService';
 import './App.css';
 
-const APP_VERSION = '1.3';
+const APP_VERSION = '1.4';
 
 function App() {
   const [videos, setVideos] = useState<VideoFile[]>([]);

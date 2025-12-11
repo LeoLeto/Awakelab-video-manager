@@ -6,43 +6,98 @@ interface VideoUploaderProps {
   onUploadSuccess: () => void;
 }
 
+interface FileUploadProgress {
+  name: string;
+  progress: number;
+  status: 'uploading' | 'completed' | 'error';
+  error?: string;
+}
+
 export const VideoUploader = ({ currentFolder, onUploadSuccess }: VideoUploaderProps) => {
   const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
+  const [fileProgress, setFileProgress] = useState<FileUploadProgress[]>([]);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
 
-    // Validate file type
+    // Validate file types
     const validVideoTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'];
-    if (!validVideoTypes.includes(file.type)) {
-      setError('Please select a valid video file (MP4, WebM, OGG, or MOV)');
+    const validFiles: File[] = [];
+    const invalidFiles: string[] = [];
+
+    Array.from(files).forEach(file => {
+      if (validVideoTypes.includes(file.type)) {
+        validFiles.push(file);
+      } else {
+        invalidFiles.push(file.name);
+      }
+    });
+
+    if (invalidFiles.length > 0) {
+      setError(`Invalid file types: ${invalidFiles.join(', ')}`);
       return;
     }
 
+    if (validFiles.length === 0) return;
+
     setUploading(true);
     setError(null);
-    setProgress(0);
+    
+    // Initialize progress for all files
+    const initialProgress: FileUploadProgress[] = validFiles.map(file => ({
+      name: file.name,
+      progress: 0,
+      status: 'uploading' as const,
+    }));
+    setFileProgress(initialProgress);
 
-    try {
-      await uploadVideoToS3(file, currentFolder, (progress) => {
-        setProgress(Math.round(progress));
-      });
-      onUploadSuccess();
+    // Upload files sequentially
+    for (let i = 0; i < validFiles.length; i++) {
+      const file = validFiles[i];
       
-      // Reset form
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+      try {
+        await uploadVideoToS3(file, currentFolder, (progress) => {
+          setFileProgress(prev => 
+            prev.map((fp, idx) => 
+              idx === i ? { ...fp, progress: Math.round(progress) } : fp
+            )
+          );
+        });
+        
+        // Mark as completed
+        setFileProgress(prev => 
+          prev.map((fp, idx) => 
+            idx === i ? { ...fp, status: 'completed', progress: 100 } : fp
+          )
+        );
+      } catch (err) {
+        // Mark as error
+        setFileProgress(prev => 
+          prev.map((fp, idx) => 
+            idx === i ? { 
+              ...fp, 
+              status: 'error', 
+              error: err instanceof Error ? err.message : 'Upload failed' 
+            } : fp
+          )
+        );
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to upload video');
-    } finally {
-      setUploading(false);
-      setTimeout(() => setProgress(0), 1000);
     }
+
+    onUploadSuccess();
+    
+    // Reset form
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    
+    setUploading(false);
+    
+    // Clear progress after a delay
+    setTimeout(() => setFileProgress([]), 2000);
   };
 
   return (
@@ -52,13 +107,14 @@ export const VideoUploader = ({ currentFolder, onUploadSuccess }: VideoUploaderP
           ref={fileInputRef}
           type="file"
           accept="video/*"
+          multiple
           onChange={handleFileSelect}
           disabled={uploading}
           id="video-upload"
           style={{ display: 'none' }}
         />
         <label htmlFor="video-upload" className={`upload-button ${uploading ? 'disabled' : ''}`}>
-          {uploading ? 'Uploading...' : 'Upload Video'}
+          {uploading ? 'Uploading...' : 'Upload Videos'}
         </label>
         
         {currentFolder !== 'Uncategorized' && (
@@ -66,15 +122,28 @@ export const VideoUploader = ({ currentFolder, onUploadSuccess }: VideoUploaderP
         )}
       </div>
 
-      {uploading && (
-        <div className="upload-progress">
-          <div className="progress-info">
-            <span>Uploading...</span>
-            <span>{progress}%</span>
-          </div>
-          <div className="progress-bar">
-            <div className="progress-fill" style={{ width: `${progress}%` }}></div>
-          </div>
+      {fileProgress.length > 0 && (
+        <div className="multi-upload-progress">
+          {fileProgress.map((fp, idx) => (
+            <div key={idx} className="file-upload-item">
+              <div className="file-info">
+                <span className="file-name">{fp.name}</span>
+                <span className={`file-status ${fp.status}`}>
+                  {fp.status === 'uploading' && `${fp.progress}%`}
+                  {fp.status === 'completed' && '✓ Complete'}
+                  {fp.status === 'error' && '✕ Failed'}
+                </span>
+              </div>
+              {fp.status === 'uploading' && (
+                <div className="progress-bar">
+                  <div className="progress-fill" style={{ width: `${fp.progress}%` }}></div>
+                </div>
+              )}
+              {fp.status === 'error' && fp.error && (
+                <div className="file-error">{fp.error}</div>
+              )}
+            </div>
+          ))}
         </div>
       )}
 
