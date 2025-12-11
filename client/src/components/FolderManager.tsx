@@ -19,6 +19,9 @@ export const FolderManager = ({
   onDeleteFolder,
   loadingFolders,
 }: FolderManagerProps) => {
+  // Configuration: Set to true to keep all folders expanded
+  const KEEP_ALL_EXPANDED = true;
+
   const [isCreating, setIsCreating] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [renamingFolder, setRenamingFolder] = useState<string | null>(null);
@@ -27,14 +30,66 @@ export const FolderManager = ({
   const [deletingFolder, setDeletingFolder] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [renamingInProgress, setRenamingInProgress] = useState(false);
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+
+  // Helper function to get nesting level
+  const getNestingLevel = (folderPath: string) => {
+    return folderPath.split('/').length - 1;
+  };
+
+  // Helper function to get display name (last part of path)
+  const getDisplayName = (folderPath: string) => {
+    const parts = folderPath.split('/');
+    return parts[parts.length - 1];
+  };
+
+  // Helper function to get parent path
+  const getParentPath = (folderPath: string) => {
+    const parts = folderPath.split('/');
+    return parts.slice(0, -1).join('/');
+  };
+
+  // Helper function to check if folder should be visible
+  const isFolderVisible = (folderPath: string) => {
+    if (KEEP_ALL_EXPANDED) return true; // Show all folders when expanded mode is on
+    const parent = getParentPath(folderPath);
+    if (!parent) return true; // Top-level folders always visible
+    return expandedFolders.has(parent);
+  };
+
+  // Helper function to check if folder has children
+  const hasChildren = (folderPath: string) => {
+    return folders.some(f => f.startsWith(folderPath + '/') && f !== folderPath);
+  };
+
+  // Toggle folder expansion
+  const toggleExpand = (folderPath: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setExpandedFolders(prev => {
+      const next = new Set(prev);
+      if (next.has(folderPath)) {
+        next.delete(folderPath);
+      } else {
+        next.add(folderPath);
+      }
+      return next;
+    });
+  };
 
   const handleCreateFolder = async () => {
     if (newFolderName.trim() && !creating) {
       setCreating(true);
       try {
-        await onCreateFolder(newFolderName.trim());
+        const folderPath = currentFolder && currentFolder !== 'Uncategorized'
+          ? `${currentFolder}/${newFolderName.trim()}`
+          : newFolderName.trim();
+        await onCreateFolder(folderPath);
         setNewFolderName('');
         setIsCreating(false);
+        // Auto-expand parent folder
+        if (currentFolder && currentFolder !== 'Uncategorized') {
+          setExpandedFolders(prev => new Set(prev).add(currentFolder));
+        }
       } finally {
         setCreating(false);
       }
@@ -104,7 +159,11 @@ export const FolderManager = ({
             type="text"
             value={newFolderName}
             onChange={(e) => setNewFolderName(e.target.value)}
-            placeholder="Folder name"
+            placeholder={
+              currentFolder && currentFolder !== 'Uncategorized'
+                ? `Subfolder of "${getDisplayName(currentFolder)}"`
+                : "Folder name"
+            }
             onKeyPress={(e) => e.key === 'Enter' && !creating && handleCreateFolder()}
             disabled={creating}
           />
@@ -114,80 +173,112 @@ export const FolderManager = ({
         </div>
       )}
 
-      <div className="folder-list">
+      <div 
+        className="folder-list"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            onFolderChange('Uncategorized');
+          }
+        }}
+      >
         {loadingFolders ? (
           <div className="loading-folders">⏳ Loading folders...</div>
         ) : (
-          folders.map((folder) => (
-          <div
-            key={folder}
-            className={`folder-item ${currentFolder === folder ? 'active' : ''}`}
-            onClick={() => onFolderChange(folder)}
-          >
-            {renamingFolder === folder ? (
-              <div className="folder-rename-container">
-                <input
-                  type="text"
-                  className={`folder-rename-input ${renamingInProgress ? 'renaming' : ''}`}
-                  value={renameValue}
-                  onChange={(e) => setRenameValue(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' && !renamingInProgress) handleRename(folder);
-                    if (e.key === 'Escape') setRenamingFolder(null);
+          folders
+            .filter(folder => isFolderVisible(folder))
+            .map((folder) => {
+              const nestingLevel = getNestingLevel(folder);
+              const displayName = getDisplayName(folder);
+              const isExpanded = expandedFolders.has(folder);
+              const hasSub = hasChildren(folder);
+
+              return (
+                <div
+                  key={folder}
+                  className={`folder-item ${currentFolder === folder ? 'active' : ''}`}
+                  style={{ paddingLeft: `${1 + nestingLevel * 1.5}rem` }}
+                  onClick={() => {
+                    onFolderChange(folder);
+                    // Auto-expand if has children
+                    if (hasSub && !isExpanded) {
+                      setExpandedFolders(prev => new Set(prev).add(folder));
+                    }
                   }}
-                  onBlur={() => !renamingInProgress && handleRename(folder)}
-                  autoFocus
-                  onClick={(e) => e.stopPropagation()}
-                  disabled={renamingInProgress}
-                />
-                {renamingInProgress && (
-                  <span className="renaming-overlay">⏳ Renaming...</span>
-                )}
-              </div>
-            ) : (
-              <span className="folder-name" title={folder}>{folder}</span>
-            )}
-            {folder !== 'Uncategorized' && (
-              <>
-                {confirmDelete === folder ? (
-                  <div className="folder-delete-confirm">
+                >
+                  {hasSub && (
                     <button
-                      className="folder-confirm-btn"
-                      onClick={(e) => handleConfirmDelete(folder, e)}
+                      className="folder-expand-btn"
+                      onClick={(e) => KEEP_ALL_EXPANDED ? e.stopPropagation() : toggleExpand(folder, e)}
+                      style={{ cursor: KEEP_ALL_EXPANDED ? 'default' : 'pointer' }}
                     >
-                      ✓
+                      {KEEP_ALL_EXPANDED ? '▼' : (isExpanded ? '▼' : '▶')}
                     </button>
-                    <button
-                      className="folder-cancel-btn"
-                      onClick={handleCancelDelete}
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ) : (
-                  <div className={`folder-actions ${deletingFolder === folder ? 'active' : ''}`}>
-                    <button
-                      className="folder-action-btn"
-                      onClick={(e) => handleStartRename(folder, e)}
-                      title="Rename folder"
-                      disabled={deletingFolder === folder}
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      className="folder-action-btn"
-                      onClick={(e) => handleDeleteClick(folder, e)}
-                      title="Delete folder"
-                      disabled={deletingFolder === folder}
-                    >
-                      {deletingFolder === folder ? '⏳' : '🗑️'}
-                    </button>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-          ))
+                  )}
+                  {renamingFolder === folder ? (
+                    <div className="folder-rename-container">
+                      <input
+                        type="text"
+                        className={`folder-rename-input ${renamingInProgress ? 'renaming' : ''}`}
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter' && !renamingInProgress) handleRename(folder);
+                          if (e.key === 'Escape') setRenamingFolder(null);
+                        }}
+                        onBlur={() => !renamingInProgress && handleRename(folder)}
+                        autoFocus
+                        onClick={(e) => e.stopPropagation()}
+                        disabled={renamingInProgress}
+                      />
+                      {renamingInProgress && (
+                        <span className="renaming-overlay">⏳ Renaming...</span>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="folder-name" title={folder}>{displayName}</span>
+                  )}
+                  {folder !== 'Uncategorized' && (
+                    <>
+                      {confirmDelete === folder ? (
+                        <div className="folder-delete-confirm">
+                          <button
+                            className="folder-confirm-btn"
+                            onClick={(e) => handleConfirmDelete(folder, e)}
+                          >
+                            ✓
+                          </button>
+                          <button
+                            className="folder-cancel-btn"
+                            onClick={handleCancelDelete}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ) : (
+                        <div className={`folder-actions ${deletingFolder === folder ? 'active' : ''}`}>
+                          <button
+                            className="folder-action-btn"
+                            onClick={(e) => handleStartRename(folder, e)}
+                            title="Rename folder"
+                            disabled={deletingFolder === folder}
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            className="folder-action-btn"
+                            onClick={(e) => handleDeleteClick(folder, e)}
+                            title="Delete folder"
+                            disabled={deletingFolder === folder}
+                          >
+                            {deletingFolder === folder ? '⏳' : '🗑️'}
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              );
+            })
         )}
       </div>
     </div>

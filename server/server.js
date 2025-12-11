@@ -42,26 +42,35 @@ const s3Client = new S3Client({
 const BUCKET_NAME = process.env.AWS_S3_BUCKET;
 const CLOUDFRONT_DOMAIN = process.env.CLOUDFRONT_DOMAIN || `${BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com`;
 
-// Get all folders
+// Get all folders (including nested)
 app.get('/api/folders', async (req, res) => {
   try {
-    const command = new ListObjectsV2Command({
-      Bucket: BUCKET_NAME,
-      Delimiter: '/',
-    });
-
-    const response = await s3Client.send(command);
-    const folders = ['Uncategorized'];
-
-    if (response.CommonPrefixes) {
-      response.CommonPrefixes.forEach((prefix) => {
-        const folderName = prefix.Prefix?.replace('/', '');
-        if (folderName && folderName !== 'Uncategorized') {
-          folders.push(folderName);
-        }
+    const getAllFolders = async (prefix = '') => {
+      const command = new ListObjectsV2Command({
+        Bucket: BUCKET_NAME,
+        Prefix: prefix,
+        Delimiter: '/',
       });
-    }
 
+      const response = await s3Client.send(command);
+      const folders = [];
+
+      if (response.CommonPrefixes) {
+        for (const commonPrefix of response.CommonPrefixes) {
+          const folderPath = commonPrefix.Prefix?.replace(/\/$/, '');
+          if (folderPath && folderPath !== 'Uncategorized') {
+            folders.push(folderPath);
+            // Recursively get subfolders
+            const subfolders = await getAllFolders(commonPrefix.Prefix);
+            folders.push(...subfolders);
+          }
+        }
+      }
+
+      return folders;
+    };
+
+    const folders = ['Uncategorized', ...(await getAllFolders())];
     res.json({ folders });
   } catch (error) {
     console.error('Error listing folders:', error);

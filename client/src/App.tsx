@@ -6,6 +6,8 @@ import { listVideosFromS3, deleteVideoFromS3, getAllFolders, createFolder, delet
 import type { VideoFile } from './services/apiService';
 import './App.css';
 
+const APP_VERSION = '1.1';
+
 function App() {
   const [videos, setVideos] = useState<VideoFile[]>([]);
   const [videoCache, setVideoCache] = useState<Map<string, VideoFile[]>>(new Map());
@@ -154,6 +156,7 @@ function App() {
       <header className="app-header">
         <h1>🎥 Video Manager</h1>
         <p>Upload, organize, and manage your videos with AWS S3</p>
+        <span className="app-version">v{APP_VERSION}</span>
       </header>
 
       <div className="app-container">
