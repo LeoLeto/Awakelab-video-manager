@@ -94,7 +94,7 @@ app.get('/api/videos', async (req, res) => {
             size: item.Size || 0,
             lastModified: item.LastModified,
             folder: folderName,
-            url: `https://${CLOUDFRONT_DOMAIN}/${item.Key}`,
+            url: `https://${CLOUDFRONT_DOMAIN}/${encodeURIComponent(item.Key).replace(/%2F/g, '/')}`,
           });
         }
       }
@@ -131,7 +131,7 @@ app.post('/api/upload', upload.single('video'), async (req, res) => {
     res.json({ 
       success: true, 
       key,
-      url: `https://${CLOUDFRONT_DOMAIN}/${key}`
+      url: `https://${CLOUDFRONT_DOMAIN}/${encodeURIComponent(key).replace(/%2F/g, '/')}`
     });
   } catch (error) {
     console.error('Error uploading video:', error);
