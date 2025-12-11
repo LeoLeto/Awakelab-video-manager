@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface FolderManagerProps {
   folders: string[];
@@ -20,7 +20,7 @@ export const FolderManager = ({
   loadingFolders,
 }: FolderManagerProps) => {
   // Configuration: Set to true to keep all folders expanded
-  const KEEP_ALL_EXPANDED = true;
+  const KEEP_ALL_EXPANDED = false;
 
   const [isCreating, setIsCreating] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
@@ -31,6 +31,15 @@ export const FolderManager = ({
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [renamingInProgress, setRenamingInProgress] = useState(false);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+
+  // Auto-expand first two levels when folders load
+  useEffect(() => {
+    const firstTwoLevels = folders.filter(folder => {
+      const level = getNestingLevel(folder);
+      return level <= 1; // Levels 0 and 1
+    });
+    setExpandedFolders(new Set(firstTwoLevels));
+  }, [folders]);
 
   // Helper function to get nesting level
   const getNestingLevel = (folderPath: string) => {
@@ -52,9 +61,17 @@ export const FolderManager = ({
   // Helper function to check if folder should be visible
   const isFolderVisible = (folderPath: string) => {
     if (KEEP_ALL_EXPANDED) return true; // Show all folders when expanded mode is on
-    const parent = getParentPath(folderPath);
-    if (!parent) return true; // Top-level folders always visible
-    return expandedFolders.has(parent);
+    
+    // Check if ALL ancestors are expanded
+    const parts = folderPath.split('/');
+    for (let i = 1; i < parts.length; i++) {
+      const ancestorPath = parts.slice(0, i).join('/');
+      if (!expandedFolders.has(ancestorPath)) {
+        return false; // If any ancestor is collapsed, hide this folder
+      }
+    }
+    
+    return true; // All ancestors are expanded
   };
 
   // Helper function to check if folder has children
