@@ -163,16 +163,16 @@ body {
 }
 
 .folder-item {
-  display      : flex;
-  align-items  : center;
-  gap          : 0.75rem;
-  padding      : 0.75rem;
+  position     : relative;
+  padding      : 0.75rem 0.75rem 0.75rem 1rem;
   border-radius: 8px;
   cursor       : pointer;
   transition   : all 0.2s;
   background   : #f8f9fa;
   color        : #333;
-  min-width    : 0;
+  min-height   : 3rem;
+  display      : flex;
+  align-items  : center;
 }
 
 .folder-item:hover {
@@ -184,24 +184,32 @@ body {
   color     : white;
 }
 
-.folder-icon {
-  font-size: 1.2rem;
-}
-
 .folder-name {
-  font-weight  : 500;
-  color        : inherit;
-  flex         : 1;
-  min-width    : 0;
-  overflow     : hidden;
-  text-overflow: ellipsis;
+  font-weight       : 500;
+  color             : inherit;
+  flex              : 1;
+  min-width         : 0;
+  overflow          : hidden;
+  display           : -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  line-height       : 1.4;
+  word-break        : break-word;
+  font-size         : 0.95rem;
 }
 
 .folder-actions {
+  position  : absolute;
+  top       : 0.5rem;
+  right     : 0.5rem;
   display   : flex;
   gap       : 0.25rem;
   opacity   : 0;
   transition: opacity 0.2s;
+  background: #667eea;
+  border-radius: 6px;
+  padding      : 0.25rem;
+  box-shadow   : 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .folder-item:hover .folder-actions,
@@ -221,6 +229,16 @@ body {
 
 .folder-action-btn:hover {
   background: rgba(0, 0, 0, 0.1);
+}
+
+.folder-item.active .folder-actions {
+  /* background: rgba(102, 126, 234, 0.95); */
+    background: #e9ecef;
+
+}
+
+.folder-item.active .folder-action-btn {
+  color: white;
 }
 
 .folder-item.active .folder-action-btn:hover {
@@ -369,12 +387,12 @@ body {
 }
 
 .progress-info {
-  display: flex;
+  display        : flex;
   justify-content: space-between;
-  margin-bottom: 0.5rem;
-  font-size: 0.9rem;
-  color: #666;
-  font-weight: 500;
+  margin-bottom  : 0.5rem;
+  font-size      : 0.9rem;
+  color          : #666;
+  font-weight    : 500;
 }
 
 .progress-bar {

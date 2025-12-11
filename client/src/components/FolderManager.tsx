@@ -124,7 +124,6 @@ export const FolderManager = ({
             className={`folder-item ${currentFolder === folder ? 'active' : ''}`}
             onClick={() => onFolderChange(folder)}
           >
-            <span className="folder-icon">📁</span>
             {renamingFolder === folder ? (
               <div className="folder-rename-container">
                 <input
@@ -146,7 +145,7 @@ export const FolderManager = ({
                 )}
               </div>
             ) : (
-              <span className="folder-name">{folder}</span>
+              <span className="folder-name" title={folder}>{folder}</span>
             )}
             {folder !== 'Uncategorized' && (
               <>
