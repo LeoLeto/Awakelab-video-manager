@@ -19,7 +19,9 @@ const upload = multer({ storage: multer.memoryStorage() });
 app.use(cors({
   origin: [
     "https://video-manager.awakelab.world",
-    "http://video-manager.awakelab.world"
+    "http://video-manager.awakelab.world",
+    "http://localhost:5173",
+    "http://localhost:3000"
   ],
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"],

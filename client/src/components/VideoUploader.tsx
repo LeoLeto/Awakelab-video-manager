@@ -28,8 +28,9 @@ export const VideoUploader = ({ currentFolder, onUploadSuccess }: VideoUploaderP
     setProgress(0);
 
     try {
-      await uploadVideoToS3(file, currentFolder);
-      setProgress(100);
+      await uploadVideoToS3(file, currentFolder, (progress) => {
+        setProgress(Math.round(progress));
+      });
       onUploadSuccess();
       
       // Reset form
@@ -66,8 +67,14 @@ export const VideoUploader = ({ currentFolder, onUploadSuccess }: VideoUploaderP
       </div>
 
       {uploading && (
-        <div className="progress-bar">
-          <div className="progress-fill" style={{ width: `${progress}%` }}></div>
+        <div className="upload-progress">
+          <div className="progress-info">
+            <span>Uploading...</span>
+            <span>{progress}%</span>
+          </div>
+          <div className="progress-bar">
+            <div className="progress-fill" style={{ width: `${progress}%` }}></div>
+          </div>
         </div>
       )}
 
