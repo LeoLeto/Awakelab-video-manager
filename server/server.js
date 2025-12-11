@@ -16,8 +16,15 @@ dotenv.config();
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
 
-// CORS configuration
-app.use(cors());
+app.use(cors({
+  origin: [
+    "https://video-manager.awakelab.world",
+    "http://video-manager.awakelab.world"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
+}));
 app.use(express.json());
 
 // Initialize S3 client
