@@ -97,7 +97,8 @@ app.get('/api/videos', async (req, res) => {
         if (item.Key && item.Key.match(/\.(mp4|webm|mov|avi|mkv)$/i)) {
           const keyParts = item.Key.split('/');
           const fileName = keyParts[keyParts.length - 1];
-          const folderName = keyParts.length > 1 ? keyParts[0] : 'Uncategorized';
+          // Get full folder path (everything except the filename)
+          const folderName = keyParts.length > 1 ? keyParts.slice(0, -1).join('/') : 'Uncategorized';
 
           videos.push({
             key: item.Key,
