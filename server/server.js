@@ -126,10 +126,13 @@ app.post('/api/upload', upload.single('video'), async (req, res) => {
       return res.status(400).json({ error: 'No file provided' });
     }
 
+    // Fix filename encoding (multer sometimes misinterprets UTF-8)
+    const filename = Buffer.from(req.file.originalname, 'latin1').toString('utf8');
+    
     const folder = req.body.folder || 'Uncategorized';
     const key = folder === 'Uncategorized' 
-      ? req.file.originalname 
-      : `${folder}/${req.file.originalname}`;
+      ? filename 
+      : `${folder}/${filename}`;
 
     const command = new PutObjectCommand({
       Bucket: BUCKET_NAME,
