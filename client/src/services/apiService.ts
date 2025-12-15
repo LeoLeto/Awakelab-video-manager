@@ -157,7 +157,8 @@ export const deleteFolder = async (folderName: string): Promise<void> => {
       method: 'DELETE',
     });
     if (!response.ok) {
-      throw new Error('Failed to delete folder');
+      const errorData = await response.json().catch(() => ({ error: 'Failed to delete folder' }));
+      throw new Error(errorData.error || 'Failed to delete folder');
     }
   } catch (error) {
     console.error('Error deleting folder:', error);

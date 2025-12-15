@@ -311,6 +311,18 @@ app.delete('/api/folders/:folderName', async (req, res) => {
     const listResponse = await s3Client.send(listCommand);
 
     if (listResponse.Contents) {
+      // Check if folder contains videos (excluding .keep files)
+      const hasVideos = listResponse.Contents.some(item => 
+        item.Key && 
+        item.Key.match(/\.(mp4|webm|mov|avi|mkv)$/i)
+      );
+
+      if (hasVideos) {
+        return res.status(400).json({ 
+          error: 'Cannot delete folder that contains videos. Please delete or move all videos first.' 
+        });
+      }
+
       // Delete each object
       for (const item of listResponse.Contents) {
         if (!item.Key) continue;

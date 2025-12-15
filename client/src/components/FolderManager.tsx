@@ -142,6 +142,10 @@ export const FolderManager = ({
     setDeletingFolder(folder);
     try {
       await onDeleteFolder(folder);
+    } catch (error) {
+      // Error is handled by parent component (App.tsx)
+      // Just reset the UI state
+      console.error('Failed to delete folder:', error);
     } finally {
       setDeletingFolder(null);
     }

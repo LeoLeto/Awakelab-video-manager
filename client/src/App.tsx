@@ -6,7 +6,7 @@ import { listVideosFromS3, deleteVideoFromS3, getAllFolders, createFolder, delet
 import type { VideoFile } from './services/apiService';
 import './App.css';
 
-const APP_VERSION = '1.7';
+const APP_VERSION = '1.8';
 
 function App() {
   const [videos, setVideos] = useState<VideoFile[]>([]);
@@ -132,7 +132,16 @@ function App() {
   };
 
   const handleDeleteFolder = async (folderName: string) => {
+    // Client-side validation: Check if folder has videos
     try {
+      const folderVideos = await listVideosFromS3(folderName);
+      const videosInFolder = folderVideos.filter(video => video.folder === folderName);
+      
+      if (videosInFolder.length > 0) {
+        setError('Cannot delete folder that contains videos. Please delete or move all videos first.');
+        throw new Error('Cannot delete folder that contains videos. Please delete or move all videos first.');
+      }
+
       await deleteFolder(folderName);
       await loadFolders();
       
@@ -148,6 +157,7 @@ function App() {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete folder');
+      throw err; // Re-throw so FolderManager can handle it
     }
   };
 
