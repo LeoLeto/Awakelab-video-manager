@@ -2,13 +2,17 @@ import { useState, useEffect } from 'react';
 import { VideoUploader } from './components/VideoUploader';
 import { FolderManager } from './components/FolderManager';
 import { VideoList } from './components/VideoList';
+import { Login } from './components/Login';
+import { AuthProvider } from './context/AuthContext';
+import { useAuth } from './context/useAuth';
 import { listVideosFromS3, deleteVideoFromS3, getAllFolders, createFolder, deleteFolder, renameFolder } from './services/apiService';
 import type { VideoFile } from './services/apiService';
 import './App.css';
 
-const APP_VERSION = '1.8';
+const APP_VERSION = '1.9';
 
-function App() {
+function VideoManagerContent() {
+  const { isAuthenticated, loading: authLoading, username, logout } = useAuth();
   const [videos, setVideos] = useState<VideoFile[]>([]);
   const [videoCache, setVideoCache] = useState<Map<string, VideoFile[]>>(new Map());
   const [folders, setFolders] = useState<string[]>(['Uncategorized']);
@@ -62,12 +66,17 @@ function App() {
   };
 
   useEffect(() => {
-    loadVideos();
-  }, [currentFolder]);
+    if (isAuthenticated) {
+      loadVideos();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentFolder, isAuthenticated]);
 
   useEffect(() => {
-    loadFolders();
-  }, []);
+    if (isAuthenticated) {
+      loadFolders();
+    }
+  }, [isAuthenticated]);
 
   const handleUploadSuccess = () => {
     loadVideos(true); // Force refresh after upload
@@ -161,11 +170,37 @@ function App() {
     }
   };
 
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="app loading-screen">
+        <div className="loading-content">
+          <h1>🎥 Video Manager</h1>
+          <div className="spinner"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login if not authenticated
+  if (!isAuthenticated) {
+    return <Login />;
+  }
+
   return (
     <div className="app">
       <header className="app-header">
-        <h1>🎥 Video Manager</h1>
-        <p>Upload, organize, and manage your videos with AWS S3</p>
+        <div className="header-content">
+          <div className="header-title">
+            <h1>🎥 Video Manager</h1>
+            <p>Upload, organize, and manage your videos with AWS S3</p>
+          </div>
+          <div className="header-user">
+            <span className="username">👤 {username}</span>
+            <button onClick={logout} className="logout-button">Logout</button>
+          </div>
+        </div>
         <span className="app-version">v{APP_VERSION}</span>
       </header>
 
@@ -204,6 +239,14 @@ function App() {
         </main>
       </div>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <VideoManagerContent />
+    </AuthProvider>
   );
 }
 

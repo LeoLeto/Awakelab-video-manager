@@ -9,9 +9,26 @@ export interface VideoFile {
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
+// Helper function to get auth headers
+const getAuthHeaders = (): HeadersInit => {
+  const token = localStorage.getItem('auth_token');
+  return {
+    'Content-Type': 'application/json',
+    ...(token && { 'Authorization': `Bearer ${token}` }),
+  };
+};
+
+// Helper function to get auth token for XHR requests
+const getAuthToken = (): string | null => {
+  return localStorage.getItem('auth_token');
+};
+
 export const listVideosFromS3 = async (folder: string = ''): Promise<VideoFile[]> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/videos?folder=${encodeURIComponent(folder)}`);
+    const token = getAuthToken();
+    const response = await fetch(`${API_BASE_URL}/videos?folder=${encodeURIComponent(folder)}`, {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+    });
     if (!response.ok) {
       throw new Error('Failed to fetch videos');
     }
@@ -37,6 +54,7 @@ export const uploadVideoToS3 = async (
     formData.append('folder', folder);
 
     const xhr = new XMLHttpRequest();
+    const token = getAuthToken();
 
     return new Promise((resolve, reject) => {
       xhr.upload.addEventListener('progress', (e) => {
@@ -60,6 +78,9 @@ export const uploadVideoToS3 = async (
       });
 
       xhr.open('POST', `${API_BASE_URL}/upload`);
+      if (token) {
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      }
       xhr.send(formData);
     });
   } catch (error) {
@@ -72,6 +93,7 @@ export const deleteVideoFromS3 = async (key: string): Promise<void> => {
   try {
     const response = await fetch(`${API_BASE_URL}/videos/${encodeURIComponent(key)}`, {
       method: 'DELETE',
+      headers: getAuthHeaders(),
     });
     if (!response.ok) {
       throw new Error('Failed to delete video');
@@ -86,9 +108,7 @@ export const renameVideo = async (key: string, newName: string): Promise<{ newKe
   try {
     const response = await fetch(`${API_BASE_URL}/videos/${encodeURIComponent(key)}/rename`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ newName }),
     });
     if (!response.ok) {
@@ -103,7 +123,10 @@ export const renameVideo = async (key: string, newName: string): Promise<{ newKe
 
 export const getAllFolders = async (): Promise<string[]> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/folders`);
+    const token = getAuthToken();
+    const response = await fetch(`${API_BASE_URL}/folders`, {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+    });
     if (!response.ok) {
       throw new Error('Failed to fetch folders');
     }
@@ -119,9 +142,7 @@ export const createFolder = async (folderName: string): Promise<void> => {
   try {
     const response = await fetch(`${API_BASE_URL}/folders`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ folderName }),
     });
     if (!response.ok) {
@@ -137,9 +158,7 @@ export const renameFolder = async (oldName: string, newName: string): Promise<vo
   try {
     const response = await fetch(`${API_BASE_URL}/folders/rename`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ oldName, newName }),
     });
     if (!response.ok) {
@@ -153,8 +172,10 @@ export const renameFolder = async (oldName: string, newName: string): Promise<vo
 
 export const deleteFolder = async (folderName: string): Promise<void> => {
   try {
+    const token = getAuthToken();
     const response = await fetch(`${API_BASE_URL}/folders/${encodeURIComponent(folderName)}`, {
       method: 'DELETE',
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {},
     });
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ error: 'Failed to delete folder' }));

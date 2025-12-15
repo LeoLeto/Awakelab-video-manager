@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
 import dotenv from 'dotenv';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 import { 
   S3Client, 
   PutObjectCommand, 
@@ -42,8 +44,97 @@ const s3Client = new S3Client({
 const BUCKET_NAME = process.env.AWS_S3_BUCKET;
 const CLOUDFRONT_DOMAIN = process.env.CLOUDFRONT_DOMAIN || `${BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com`;
 
+// Authentication configuration
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const JWT_EXPIRY = process.env.JWT_EXPIRY || '24h';
+
+// Load users from environment variables
+const loadUsers = () => {
+  const users = {};
+  let i = 1;
+  while (process.env[`USER_${i}`]) {
+    const [username, hashedPassword] = process.env[`USER_${i}`].split(':');
+    if (username && hashedPassword) {
+      users[username] = hashedPassword;
+    }
+    i++;
+  }
+  return users;
+};
+
+const users = loadUsers();
+
+// Debug: Log loaded users (without passwords)
+console.log('Loaded users:', Object.keys(users));
+if (Object.keys(users).length === 0) {
+  console.warn('⚠️  WARNING: No users loaded from environment variables!');
+  console.warn('⚠️  Make sure your .env file has USER_1, USER_2, etc.');
+}
+
+// Auth middleware
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+
+  if (!token) {
+    return res.status(401).json({ error: 'Access token required' });
+  }
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ error: 'Invalid or expired token' });
+    }
+    req.user = user;
+    next();
+  });
+};
+
+// Login endpoint
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    console.log('Login attempt:', { username, passwordLength: password?.length });
+
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password required' });
+    }
+
+    const hashedPassword = users[username];
+    
+    if (!hashedPassword) {
+      console.log('User not found:', username);
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    console.log('Comparing password for user:', username);
+    const validPassword = await bcrypt.compare(password, hashedPassword);
+    console.log('Password valid:', validPassword);
+    
+    if (!validPassword) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: JWT_EXPIRY });
+    
+    res.json({ 
+      token, 
+      username,
+      expiresIn: JWT_EXPIRY 
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+// Verify token endpoint
+app.get('/api/auth/verify', authenticateToken, (req, res) => {
+  res.json({ valid: true, username: req.user.username });
+});
+
 // Get all folders (including nested)
-app.get('/api/folders', async (req, res) => {
+app.get('/api/folders', authenticateToken, async (req, res) => {
   try {
     const getAllFolders = async (prefix = '') => {
       const command = new ListObjectsV2Command({
@@ -79,7 +170,7 @@ app.get('/api/folders', async (req, res) => {
 });
 
 // List videos in a folder
-app.get('/api/videos', async (req, res) => {
+app.get('/api/videos', authenticateToken, async (req, res) => {
   try {
     const folder = req.query.folder || '';
     const prefix = folder && folder !== 'Uncategorized' ? `${folder}/` : '';
@@ -120,7 +211,7 @@ app.get('/api/videos', async (req, res) => {
 });
 
 // Upload video
-app.post('/api/upload', upload.single('video'), async (req, res) => {
+app.post('/api/upload', authenticateToken, upload.single('video'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file provided' });
@@ -155,7 +246,7 @@ app.post('/api/upload', upload.single('video'), async (req, res) => {
 });
 
 // Delete video
-app.delete('/api/videos/:key(*)', async (req, res) => {
+app.delete('/api/videos/:key(*)', authenticateToken, async (req, res) => {
   try {
     const key = req.params.key;
 
@@ -173,7 +264,7 @@ app.delete('/api/videos/:key(*)', async (req, res) => {
 });
 
 // Rename video
-app.put('/api/videos/:key(*)/rename', async (req, res) => {
+app.put('/api/videos/:key(*)/rename', authenticateToken, async (req, res) => {
   try {
     const oldKey = decodeURIComponent(req.params.key);
     const { newName } = req.body;
@@ -226,7 +317,7 @@ app.put('/api/videos/:key(*)/rename', async (req, res) => {
 });
 
 // Create folder
-app.post('/api/folders', async (req, res) => {
+app.post('/api/folders', authenticateToken, async (req, res) => {
   try {
     const { folderName } = req.body;
 
@@ -249,7 +340,7 @@ app.post('/api/folders', async (req, res) => {
 });
 
 // Rename folder
-app.put('/api/folders/rename', async (req, res) => {
+app.put('/api/folders/rename', authenticateToken, async (req, res) => {
   try {
     const { oldName, newName } = req.body;
 
@@ -298,7 +389,7 @@ app.put('/api/folders/rename', async (req, res) => {
 });
 
 // Delete folder
-app.delete('/api/folders/:folderName', async (req, res) => {
+app.delete('/api/folders/:folderName', authenticateToken, async (req, res) => {
   try {
     const folderName = req.params.folderName;
 
