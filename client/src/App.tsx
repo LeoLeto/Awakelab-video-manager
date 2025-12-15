@@ -9,13 +9,13 @@ import { listVideosFromS3, deleteVideoFromS3, getAllFolders, createFolder, delet
 import type { VideoFile } from './services/apiService';
 import './App.css';
 
-const APP_VERSION = '1.9';
+const APP_VERSION = '2';
 
 function VideoManagerContent() {
   const { isAuthenticated, loading: authLoading, username, logout } = useAuth();
   const [videos, setVideos] = useState<VideoFile[]>([]);
   const [videoCache, setVideoCache] = useState<Map<string, VideoFile[]>>(new Map());
-  const [folders, setFolders] = useState<string[]>(['Uncategorized']);
+  const [folders, setFolders] = useState<string[]>(['Uncategorized', 'Recycle Bin']);
   const [currentFolder, setCurrentFolder] = useState('Uncategorized');
   const [loading, setLoading] = useState(false);
   const [loadingFolders, setLoadingFolders] = useState(true);
@@ -86,6 +86,8 @@ function VideoManagerContent() {
   const handleDelete = async (key: string) => {
     try {
       await deleteVideoFromS3(key);
+      // Clear cache for all folders since video might be moved to Recycle Bin
+      setVideoCache(new Map());
       loadVideos(true); // Force refresh after delete
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete video');
@@ -218,10 +220,12 @@ function VideoManagerContent() {
         </aside>
 
         <main className="main-content">
-          <VideoUploader
-            currentFolder={currentFolder}
-            onUploadSuccess={handleUploadSuccess}
-          />
+          {currentFolder !== 'Recycle Bin' && (
+            <VideoUploader
+              currentFolder={currentFolder}
+              onUploadSuccess={handleUploadSuccess}
+            />
+          )}
 
           {error && (
             <div className="error-banner">
@@ -233,8 +237,12 @@ function VideoManagerContent() {
           <VideoList
             videos={videos}
             onDelete={handleDelete}
-            onRename={() => loadVideos(true)}
+            onRename={() => {
+              setVideoCache(new Map()); // Clear cache when video is renamed/moved/restored
+              loadVideos(true);
+            }}
             loading={loading}
+            folders={folders}
           />
         </main>
       </div>

@@ -109,7 +109,7 @@ export const FolderManager = ({
 
   const handleStartRename = (folder: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (folder === 'Uncategorized') return;
+    if (folder === 'Uncategorized' || folder === 'Recycle Bin') return;
     setRenamingFolder(folder);
     setRenameValue(folder);
   };
@@ -132,7 +132,7 @@ export const FolderManager = ({
 
   const handleDeleteClick = (folder: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (folder === 'Uncategorized' || deletingFolder) return;
+    if (folder === 'Uncategorized' || folder === 'Recycle Bin' || deletingFolder) return;
     setConfirmDelete(folder);
   };
 
@@ -201,6 +201,12 @@ export const FolderManager = ({
         ) : (
           folders
             .filter(folder => isFolderVisible(folder))
+            .sort((a, b) => {
+              // Always put Recycle Bin last
+              if (a === 'Recycle Bin') return 1;
+              if (b === 'Recycle Bin') return -1;
+              return 0;
+            })
             .map((folder) => {
               const nestingLevel = getNestingLevel(folder);
               const displayName = getDisplayName(folder);
@@ -210,7 +216,7 @@ export const FolderManager = ({
               return (
                 <div
                   key={folder}
-                  className={`folder-item ${currentFolder === folder ? 'active' : ''}`}
+                  className={`folder-item ${currentFolder === folder ? 'active' : ''} ${folder === 'Recycle Bin' ? 'recycle-bin' : ''}`}
                   style={{ paddingLeft: `${1 + nestingLevel * 1.5}rem` }}
                   onClick={() => {
                     onFolderChange(folder);
@@ -250,9 +256,11 @@ export const FolderManager = ({
                       )}
                     </div>
                   ) : (
-                    <span className="folder-name" title={folder}>{displayName}</span>
+                    <span className="folder-name" title={folder}>
+                      {folder === 'Recycle Bin' && '🗑️ '}{displayName}
+                    </span>
                   )}
-                  {folder !== 'Uncategorized' && (
+                  {folder !== 'Uncategorized' && folder !== 'Recycle Bin' && (
                     <>
                       {confirmDelete === folder ? (
                         <div className="folder-delete-confirm">

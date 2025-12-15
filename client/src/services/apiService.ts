@@ -121,6 +121,41 @@ export const renameVideo = async (key: string, newName: string): Promise<{ newKe
   }
 };
 
+export const moveVideo = async (key: string, targetFolder: string): Promise<{ newKey: string; url: string }> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/videos/${encodeURIComponent(key)}/move`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ targetFolder }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Failed to move video' }));
+      throw new Error(errorData.error || 'Failed to move video');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error moving video:', error);
+    throw error;
+  }
+};
+
+export const restoreVideo = async (key: string): Promise<{ restoredKey: string; url: string }> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/videos/${encodeURIComponent(key)}/restore`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Failed to restore video' }));
+      throw new Error(errorData.error || 'Failed to restore video');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error restoring video:', error);
+    throw error;
+  }
+};
+
 export const getAllFolders = async (): Promise<string[]> => {
   try {
     const token = getAuthToken();

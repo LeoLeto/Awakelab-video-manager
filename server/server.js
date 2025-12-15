@@ -161,7 +161,11 @@ app.get('/api/folders', authenticateToken, async (req, res) => {
       return folders;
     };
 
-    const folders = ['Uncategorized', ...(await getAllFolders())];
+    const allFolders = await getAllFolders();
+    const folders = ['Uncategorized', 'Recycle Bin', ...allFolders.filter(f => f !== 'Recycle Bin')];
+    console.log('=== FOLDERS LIST ===');
+    console.log('All folders from S3:', allFolders);
+    console.log('Final folders to send:', folders);
     res.json({ folders });
   } catch (error) {
     console.error('Error listing folders:', error);
@@ -245,21 +249,66 @@ app.post('/api/upload', authenticateToken, upload.single('video'), async (req, r
   }
 });
 
-// Delete video
+// Delete video (move to Recycle Bin)
 app.delete('/api/videos/:key(*)', authenticateToken, async (req, res) => {
   try {
     const key = req.params.key;
+    
+    console.log('=== DELETE VIDEO REQUEST ===');
+    console.log('Key:', key);
 
-    const command = new DeleteObjectCommand({
+    // Don't move items already in Recycle Bin (permanent delete)
+    if (key.startsWith('Recycle Bin/')) {
+      console.log('Permanently deleting from Recycle Bin');
+      const command = new DeleteObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: key,
+      });
+      await s3Client.send(command);
+      console.log('Permanent delete successful');
+      res.json({ success: true, permanent: true });
+      return;
+    }
+
+    // Get the filename from the key
+    const keyParts = key.split('/');
+    const fileName = keyParts[keyParts.length - 1];
+    
+    // Build new key in Recycle Bin with timestamp to avoid conflicts
+    const timestamp = Date.now();
+    const originalPath = keyParts.slice(0, -1).join('/') || 'Uncategorized';
+    const recycleBinKey = `Recycle Bin/${timestamp}_${originalPath.replace(/\//g, '_')}_${fileName}`;
+
+    console.log('Moving to Recycle Bin:');
+    console.log('  Original path:', originalPath);
+    console.log('  Recycle Bin key:', recycleBinKey);
+
+    // Copy to Recycle Bin (without metadata to avoid signature issues)
+    const copyCommand = new CopyObjectCommand({
+      Bucket: BUCKET_NAME,
+      CopySource: encodeURIComponent(`${BUCKET_NAME}/${key}`),
+      Key: recycleBinKey,
+    });
+
+    await s3Client.send(copyCommand);
+    console.log('Copy to Recycle Bin successful');
+
+    // Delete original
+    const deleteCommand = new DeleteObjectCommand({
       Bucket: BUCKET_NAME,
       Key: key,
     });
 
-    await s3Client.send(command);
-    res.json({ success: true });
+    await s3Client.send(deleteCommand);
+    console.log('Original delete successful');
+    res.json({ success: true, movedToRecycleBin: true });
   } catch (error) {
-    console.error('Error deleting video:', error);
-    res.status(500).json({ error: 'Failed to delete video' });
+    console.error('=== ERROR DELETING VIDEO ===');
+    console.error('Error:', error);
+    console.error('Error message:', error.message);
+    console.error('Error code:', error.code);
+    console.error('Error name:', error.name);
+    res.status(500).json({ error: 'Failed to delete video', details: error.message });
   }
 });
 
@@ -313,6 +362,144 @@ app.put('/api/videos/:key(*)/rename', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Error renaming video:', error);
     res.status(500).json({ error: 'Failed to rename video', details: error.message });
+  }
+});
+
+// Move video to different folder
+app.put('/api/videos/:key(*)/move', authenticateToken, async (req, res) => {
+  try {
+    const oldKey = decodeURIComponent(req.params.key);
+    const { targetFolder } = req.body;
+
+    console.log('=== MOVE VIDEO DEBUG ===');
+    console.log('Old key:', oldKey);
+    console.log('Target folder:', targetFolder);
+
+    if (targetFolder === undefined || targetFolder === null) {
+      return res.status(400).json({ error: 'Target folder is required' });
+    }
+
+    // Get the filename from the old key
+    const keyParts = oldKey.split('/');
+    const fileName = keyParts[keyParts.length - 1];
+
+    // Build new key with target folder
+    const newKey = targetFolder === 'Uncategorized' || targetFolder === ''
+      ? fileName
+      : `${targetFolder}/${fileName}`;
+
+    console.log('New key will be:', newKey);
+
+    // Check if file already exists in target location
+    if (oldKey === newKey) {
+      return res.status(400).json({ error: 'Video is already in the target folder' });
+    }
+
+    // Check if a file with the same name already exists in the target folder
+    try {
+      const headCommand = new HeadObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: newKey,
+      });
+      await s3Client.send(headCommand);
+      return res.status(409).json({ error: 'A file with the same name already exists in the target folder' });
+    } catch (err) {
+      // File doesn't exist, which is what we want
+      if (err.name !== 'NotFound') {
+        throw err;
+      }
+    }
+
+    // Copy to new location
+    const copyCommand = new CopyObjectCommand({
+      Bucket: BUCKET_NAME,
+      CopySource: encodeURIComponent(`${BUCKET_NAME}/${oldKey}`),
+      Key: newKey,
+    });
+
+    await s3Client.send(copyCommand);
+    console.log('Copy successful');
+
+    // Delete from old location
+    const deleteCommand = new DeleteObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: oldKey,
+    });
+
+    await s3Client.send(deleteCommand);
+    console.log('Delete successful');
+
+    res.json({ 
+      success: true, 
+      newKey,
+      url: `https://${CLOUDFRONT_DOMAIN}/${encodeURIComponent(newKey).replace(/%2F/g, '/')}`
+    });
+  } catch (error) {
+    console.error('Error moving video:', error);
+    res.status(500).json({ error: 'Failed to move video', details: error.message });
+  }
+});
+
+// Restore video from Recycle Bin
+app.put('/api/videos/:key(*)/restore', authenticateToken, async (req, res) => {
+  try {
+    const recycleBinKey = decodeURIComponent(req.params.key);
+
+    if (!recycleBinKey.startsWith('Recycle Bin/')) {
+      return res.status(400).json({ error: 'Only items in Recycle Bin can be restored' });
+    }
+
+    // Extract filename (remove timestamp and path prefix from recycle bin key)
+    // Format: Recycle Bin/timestamp_originalPath_fileName
+    const recycleBinFileName = recycleBinKey.replace('Recycle Bin/', '');
+    const parts = recycleBinFileName.split('_');
+    
+    // parts[0] is timestamp
+    // parts[1] is original path (with / replaced by _)
+    // parts[2+] is the actual filename
+    const timestamp = parts[0];
+    const encodedPath = parts[1];
+    const fileName = parts.slice(2).join('_');
+    
+    // Decode the original path (replace _ back to /)
+    const originalPath = encodedPath.replace(/_/g, '/');
+
+    // Build restoration key
+    const restoreKey = originalPath === 'Uncategorized' || !originalPath
+      ? fileName
+      : `${originalPath}/${fileName}`;
+
+    console.log('=== RESTORE VIDEO DEBUG ===');
+    console.log('Recycle Bin Key:', recycleBinKey);
+    console.log('Decoded Original Path:', originalPath);
+    console.log('Restore Key:', restoreKey);
+    console.log('File Name:', fileName);
+
+    // Copy back to original location
+    const copyCommand = new CopyObjectCommand({
+      Bucket: BUCKET_NAME,
+      CopySource: encodeURIComponent(`${BUCKET_NAME}/${recycleBinKey}`),
+      Key: restoreKey,
+    });
+
+    await s3Client.send(copyCommand);
+
+    // Delete from Recycle Bin
+    const deleteCommand = new DeleteObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: recycleBinKey,
+    });
+
+    await s3Client.send(deleteCommand);
+
+    res.json({ 
+      success: true, 
+      restoredKey: restoreKey,
+      url: `https://${CLOUDFRONT_DOMAIN}/${encodeURIComponent(restoreKey).replace(/%2F/g, '/')}`
+    });
+  } catch (error) {
+    console.error('Error restoring video:', error);
+    res.status(500).json({ error: 'Failed to restore video', details: error.message });
   }
 });
 
