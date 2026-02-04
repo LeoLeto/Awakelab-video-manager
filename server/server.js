@@ -189,9 +189,13 @@ app.get('/api/videos', authenticateToken, async (req, res) => {
 
     if (response.Contents) {
       for (const item of response.Contents) {
-        if (item.Key && item.Key.match(/\.(mp4|webm|mov|avi|mkv)$/i)) {
+        // Skip items that are folders (end with /)
+        if (item.Key && !item.Key.endsWith('/')) {
           const keyParts = item.Key.split('/');
           const fileName = keyParts[keyParts.length - 1];
+          // Skip if the filename is empty or is .keep
+          if (!fileName || fileName === '.keep') continue;
+          
           // Get full folder path (everything except the filename)
           const folderName = keyParts.length > 1 ? keyParts.slice(0, -1).join('/') : 'Uncategorized';
 
