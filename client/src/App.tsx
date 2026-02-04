@@ -9,7 +9,7 @@ import { listVideosFromS3, deleteVideoFromS3, getAllFolders, createFolder, delet
 import type { VideoFile } from './services/apiService';
 import './App.css';
 
-const APP_VERSION = '2';
+const APP_VERSION = '2.1';
 
 function VideoManagerContent() {
   const { isAuthenticated, loading: authLoading, username, logout } = useAuth();

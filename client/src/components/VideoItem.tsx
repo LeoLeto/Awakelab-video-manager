@@ -23,6 +23,18 @@ export const VideoItem = ({ video, onDelete, onRename, folders }: VideoItemProps
 
   const isInRecycleBin = video.key.startsWith('Recycle Bin/');
 
+  // Helper to check if file is a video
+  const isVideoFile = (fileName: string) => {
+    const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv', '.m4v'];
+    return videoExtensions.some(ext => fileName.toLowerCase().endsWith(ext));
+  };
+
+  // Helper to get file extension
+  const getFileExtension = (fileName: string) => {
+    const lastDot = fileName.lastIndexOf('.');
+    return lastDot > 0 ? fileName.substring(lastDot + 1).toUpperCase() : 'FILE';
+  };
+
   const handleCopyUrl = () => {
     navigator.clipboard.writeText(video.url);
     setCopied(true);
@@ -133,10 +145,18 @@ export const VideoItem = ({ video, onDelete, onRename, folders }: VideoItemProps
   return (
     <div className="video-item">
       <div className="video-preview">
-        <video controls preload="metadata">
-          <source src={video.url} type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
+        {isVideoFile(video.name) ? (
+          <video controls preload="metadata">
+            <source src={video.url} type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+        ) : (
+          <div className="file-icon-preview">
+            <div className="file-icon">
+              <span className="file-extension">{getFileExtension(video.name)}</span>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="video-info">

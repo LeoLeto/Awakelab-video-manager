@@ -23,25 +23,7 @@ export const VideoUploader = ({ currentFolder, onUploadSuccess }: VideoUploaderP
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
-    // Validate file types
-    const validVideoTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'];
-    const validFiles: File[] = [];
-    const invalidFiles: string[] = [];
-
-    Array.from(files).forEach(file => {
-      if (validVideoTypes.includes(file.type)) {
-        validFiles.push(file);
-      } else {
-        invalidFiles.push(file.name);
-      }
-    });
-
-    if (invalidFiles.length > 0) {
-      setError(`Invalid file types: ${invalidFiles.join(', ')}`);
-      return;
-    }
-
-    if (validFiles.length === 0) return;
+    const validFiles = Array.from(files);
 
     setUploading(true);
     setError(null);
@@ -106,7 +88,6 @@ export const VideoUploader = ({ currentFolder, onUploadSuccess }: VideoUploaderP
         <input
           ref={fileInputRef}
           type="file"
-          accept="video/*"
           multiple
           onChange={handleFileSelect}
           disabled={uploading}
@@ -114,7 +95,7 @@ export const VideoUploader = ({ currentFolder, onUploadSuccess }: VideoUploaderP
           style={{ display: 'none' }}
         />
         <label htmlFor="video-upload" className={`upload-button ${uploading ? 'disabled' : ''}`}>
-          {uploading ? 'Uploading...' : 'Upload Videos'}
+          {uploading ? 'Uploading...' : 'Upload Files'}
         </label>
         
         {currentFolder !== 'Uncategorized' && (
