@@ -293,15 +293,16 @@ const ChangePasswordModal = ({ username, onClose, onSaved }: ChangePasswordModal
   );
 };
 
-// ─── Directory picker popover ─────────────────────────────────────────────────
+// ─── Directory picker modal ─────────────────────────────────────────────────
 interface DirPickerProps {
+  username          : string;
   allowedDirectories: string[];
-  folders            : string[];
-  onChange           : (dirs: string[]) => void;
-  onClose            : () => void;
+  folders           : string[];
+  onChange          : (dirs: string[]) => void;
+  onClose           : () => void;
 }
 
-const DirPicker = ({ allowedDirectories, folders, onChange, onClose }: DirPickerProps) => {
+const DirPicker = ({ username, allowedDirectories, folders, onChange, onClose }: DirPickerProps) => {
   const contentFolders = folders.filter(f => f !== 'Recycle Bin');
 
   const toggle = (dir: string) => {
@@ -314,28 +315,37 @@ const DirPicker = ({ allowedDirectories, folders, onChange, onClose }: DirPicker
   };
 
   return (
-    <div className="um-dir-popover">
-      <div className="um-dir-popover-header">
-        <span>Directorios permitidos</span>
-        <button onClick={onClose}>✕</button>
+    <div className="um-modal-overlay" onClick={onClose}>
+      <div className="um-modal um-modal--sm" onClick={e => e.stopPropagation()}>
+        <div className="um-modal-header">
+          <h3>Directorios de <strong>{username}</strong></h3>
+          <button className="um-modal-close" onClick={onClose}>✕</button>
+        </div>
+        <div className="um-modal-body">
+          {contentFolders.length === 0 && (
+            <p className="um-no-folders">No hay directorios disponibles.</p>
+          )}
+          <div className="um-dir-modal-list">
+            {contentFolders.map(f => (
+              <label
+                key={f}
+                className="um-dir-checkbox"
+                style={{ paddingLeft: `${0.5 + getNestingLevel(f) * 1.5}rem` }}
+              >
+                <input
+                  type="checkbox"
+                  checked={allowedDirectories.includes(f)}
+                  onChange={() => toggle(f)}
+                />
+                {getDisplayName(f)}
+              </label>
+            ))}
+          </div>
+          <div className="um-modal-footer">
+            <button className="um-btn um-btn--primary" onClick={onClose}>Listo</button>
+          </div>
+        </div>
       </div>
-      {contentFolders.length === 0 && (
-        <p className="um-no-folders">No hay directorios disponibles.</p>
-      )}
-      {contentFolders.map(f => (
-        <label
-          key={f}
-          className="um-dir-checkbox"
-          style={{ paddingLeft: `${0.5 + getNestingLevel(f) * 1.5}rem` }}
-        >
-          <input
-            type="checkbox"
-            checked={allowedDirectories.includes(f)}
-            onChange={() => toggle(f)}
-          />
-          {getDisplayName(f)}
-        </label>
-      ))}
     </div>
   );
 };
@@ -505,14 +515,6 @@ export const UserManager = ({ folders }: Props) => {
                             }
                           </button>
                         )}
-                        {openDirFor === u.username && (
-                          <DirPicker
-                            allowedDirectories={d.allowedDirectories}
-                            folders={folders}
-                            onChange={dirs => setDraft(u.username, 'allowedDirectories', dirs)}
-                            onClose={() => setOpenDirFor(null)}
-                          />
-                        )}
                       </div>
                     )}
                   </td>
@@ -611,6 +613,19 @@ export const UserManager = ({ folders }: Props) => {
           }}
         />
       )}
+
+      {openDirFor && (() => {
+        const d = drafts[openDirFor];
+        return d ? (
+          <DirPicker
+            username={openDirFor}
+            allowedDirectories={d.allowedDirectories}
+            folders={folders}
+            onChange={dirs => setDraft(openDirFor, 'allowedDirectories', dirs)}
+            onClose={() => setOpenDirFor(null)}
+          />
+        ) : null;
+      })()}
     </div>
   );
 };

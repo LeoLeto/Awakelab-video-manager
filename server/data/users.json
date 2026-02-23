@@ -23,6 +23,20 @@
         "canDelete": false,
         "canMove": false
       }
+    },
+    {
+      "username": "pruebas1",
+      "password": "$2b$10$Is7G0lIo1XzheeSz04IKO.aYb.LIjcojLqgVs5QNlekcmpzpdAeyW",
+      "isAdmin": false,
+      "permissions": {
+        "directoryAccess": "specific",
+        "allowedDirectories": [
+          "Pruebas"
+        ],
+        "canUpload": true,
+        "canDelete": false,
+        "canMove": false
+      }
     }
   ]
 }
