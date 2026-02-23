@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useAuth } from '../context/useAuth';
+import awakeLogo from '../assets/awakelab.png';
 import './Login.css';
 
 export const Login = () => {
@@ -27,9 +28,10 @@ export const Login = () => {
 
   return (
     <div className="login-container">
+      <img src={awakeLogo} alt="Awakelab" className="login-logo" />
       <div className="login-box">
         <div className="login-header">
-          <h1>🎥 Awakelab Video Manager</h1>
+          <h1>🎥 Video Manager</h1>
           <p>Please sign in to continue</p>
         </div>
         

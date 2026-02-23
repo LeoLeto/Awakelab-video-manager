@@ -547,13 +547,15 @@ export const UserManager = ({ folders }: Props) => {
                   {/* Actions */}
                   <td>
                     <div className="um-actions-cell">
-                      <button
-                        className="um-btn-icon"
-                        title="Cambiar contraseña"
-                        onClick={() => setChangingPasswordFor(u.username)}
-                      >
-                        🔑
-                      </button>
+                      {(isSelf || !isAdminRow) && (
+                        <button
+                          className="um-btn-icon"
+                          title="Cambiar contraseña"
+                          onClick={() => setChangingPasswordFor(u.username)}
+                        >
+                          🔑
+                        </button>
+                      )}
                       {!isSelf && (
                         deletingUser === u.username ? (
                           <div className="um-delete-confirm">

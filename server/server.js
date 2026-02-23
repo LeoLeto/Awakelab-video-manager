@@ -259,6 +259,11 @@ app.put('/api/admin/users/:username', authenticateToken, requireAdmin, async (re
       return res.status(400).json({ error: 'Cannot remove your own admin rights' });
     }
 
+    // Prevent changing another admin's password
+    if (password && username !== req.user.username && data.users[idx].isAdmin) {
+      return res.status(403).json({ error: 'Cannot change another admin\'s password' });
+    }
+
     if (isAdmin !== undefined) data.users[idx].isAdmin = !!isAdmin;
     if (permissions !== undefined) {
       data.users[idx].permissions = { ...defaultPermissions(), ...permissions };

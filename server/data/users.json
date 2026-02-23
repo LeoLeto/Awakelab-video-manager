@@ -11,6 +11,18 @@
         "canDelete": true,
         "canMove": true
       }
+    },
+    {
+      "username": "ainhoa",
+      "password": "$2b$10$RWPFH3md10cY5Vmz/SxWv.oI/FuMkfD2qQwGcsMiLAXkA4Xg6vIiC",
+      "isAdmin": true,
+      "permissions": {
+        "directoryAccess": "all",
+        "allowedDirectories": [],
+        "canUpload": false,
+        "canDelete": false,
+        "canMove": false
+      }
     }
   ]
 }
