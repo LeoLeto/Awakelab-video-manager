@@ -472,8 +472,10 @@ export const UserManager = ({ folders }: Props) => {
           <tbody>
             {users.map(u => {
               const d          = drafts[u.username] ?? { isAdmin: u.isAdmin, ...u.permissions };
-              const isAdminRow = d.isAdmin;
-              const isSelf     = u.username === currentUser;
+              const isAdminRow  = d.isAdmin;
+              const isSelf      = u.username === currentUser;
+              const isSuperAdmin = u.username === 'superadmin';
+              const canDelete   = !isSelf && !isSuperAdmin;
 
               return (
                 <tr key={u.username} className={isAdminRow ? 'um-row--admin' : ''}>
@@ -557,7 +559,7 @@ export const UserManager = ({ folders }: Props) => {
                       >
                         🔑
                       </button>
-                      {isSelf ? (
+                      {!canDelete ? (
                         <button
                           className="um-btn-delete"
                           style={{ visibility: 'hidden' }}

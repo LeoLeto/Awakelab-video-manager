@@ -96,7 +96,7 @@ const seedFromEnv = () => {
     const [username, hashedPassword] = process.env[`USER_${i}`].split(':');
     if (username && hashedPassword) {
       users.push({
-        username,
+        username   : username.toLowerCase(),
         password   : hashedPassword,
         isAdmin    : true,           // legacy env-var users become admins
         permissions: defaultPermissions(),
@@ -157,12 +157,13 @@ const requirePermission = (permKey) => (req, res, next) => {
 // Login endpoint
 app.post('/api/auth/login', async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username: rawUsername, password } = req.body;
 
-    if (!username || !password) {
+    if (!rawUsername || !password) {
       return res.status(400).json({ error: 'Username and password required' });
     }
 
+    const username = rawUsername.toLowerCase();
     const { users } = readUsers();
     const userRecord = users.find(u => u.username === username);
 
@@ -237,11 +238,12 @@ app.get('/api/admin/users', authenticateToken, requireAdmin, (req, res) => {
 // Create user
 app.post('/api/admin/users', authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const { username, password, isAdmin = false, permissions } = req.body;
-    if (!username || !password) {
+    const { username: rawUsername, password, isAdmin = false, permissions } = req.body;
+    if (!rawUsername || !password) {
       return res.status(400).json({ error: 'Username and password required' });
     }
 
+    const username = rawUsername.trim().toLowerCase();
     const data = readUsers();
     if (data.users.find(u => u.username === username)) {
       return res.status(409).json({ error: 'Username already exists' });
@@ -269,7 +271,7 @@ app.post('/api/admin/users', authenticateToken, requireAdmin, async (req, res) =
 // Update user permissions (and/or isAdmin flag)
 app.put('/api/admin/users/:username', authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const { username } = req.params;
+    const username = req.params.username.toLowerCase();
     const { isAdmin, permissions, password } = req.body;
 
     const data = readUsers();
@@ -307,7 +309,10 @@ app.put('/api/admin/users/:username', authenticateToken, requireAdmin, async (re
 
 // Delete user
 app.delete('/api/admin/users/:username', authenticateToken, requireAdmin, (req, res) => {
-  const { username } = req.params;
+  const username = req.params.username.toLowerCase();
+  if (username === 'superadmin') {
+    return res.status(403).json({ error: 'The superadmin account cannot be deleted' });
+  }
   if (username === req.user.username) {
     return res.status(400).json({ error: 'Cannot delete your own account' });
   }
