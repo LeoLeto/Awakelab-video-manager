@@ -55,10 +55,21 @@ body {
   gap        : 1rem;
 }
 
-.username {
-  font-size  : 0.95rem;
-  font-weight: 500;
-  opacity    : 0.95;
+.username-button {
+  background   : rgba(255, 255, 255, 0.15);
+  color        : white;
+  border       : 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 6px;
+  padding      : 0.45rem 0.9rem;
+  font-size    : 0.95rem;
+  font-weight  : 500;
+  cursor       : pointer;
+  transition   : background 0.2s, transform 0.15s;
+  white-space  : nowrap;
+}
+.username-button:hover {
+  background: rgba(255, 255, 255, 0.28);
+  transform : translateY(-1px);
 }
 
 .logout-button {
@@ -104,6 +115,95 @@ body {
 .admin-nav-button--active:hover {
   background: white;
 }
+
+/* ── Self-change-password modal (scp) ────────────────────────────── */
+.scp-overlay {
+  position  : fixed;
+  inset     : 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index   : 1000;
+  display   : flex;
+  align-items: center;
+  justify-content: center;
+}
+.scp-modal {
+  background   : #fff;
+  border-radius: 12px;
+  box-shadow   : 0 8px 32px rgba(0,0,0,0.18);
+  width        : 100%;
+  max-width    : 380px;
+  overflow     : hidden;
+}
+.scp-header {
+  display        : flex;
+  align-items    : center;
+  justify-content: space-between;
+  padding        : 1.1rem 1.25rem 1rem;
+  border-bottom  : 1px solid #e2e8f0;
+}
+.scp-header h3 { margin: 0; font-size: 1rem; color: #1e293b; }
+.scp-close {
+  background: transparent;
+  border    : none;
+  font-size : 1rem;
+  color     : #94a3b8;
+  cursor    : pointer;
+  line-height: 1;
+  padding   : 0;
+}
+.scp-close:hover { color: #475569; }
+.scp-body  { padding: 1.25rem; display: flex; flex-direction: column; gap: 0.9rem; }
+.scp-user  { margin: 0; font-size: 0.88rem; color: #475569; }
+.scp-field { display: flex; flex-direction: column; gap: 0.35rem; }
+.scp-field label { font-size: 0.8rem; font-weight: 600; color: #475569; }
+.scp-pw-wrap {
+  display    : flex;
+  align-items: center;
+  border     : 1px solid #cbd5e1;
+  border-radius: 6px;
+  overflow   : hidden;
+}
+.scp-pw-wrap input {
+  flex     : 1;
+  border   : none;
+  padding  : 0.55rem 0.75rem;
+  font-size: 0.9rem;
+  outline  : none;
+  min-width: 0;
+}
+.scp-pw-wrap button {
+  background: transparent;
+  border    : none;
+  border-left: 1px solid #e2e8f0;
+  padding   : 0 0.65rem;
+  cursor    : pointer;
+  font-size : 1rem;
+  line-height: 1;
+  color     : #64748b;
+}
+.scp-pw-wrap button:hover { background: #f1f5f9; }
+.scp-footer {
+  display        : flex;
+  justify-content: flex-end;
+  gap            : 0.6rem;
+  padding-top    : 0.25rem;
+}
+.scp-btn {
+  padding      : 0.5rem 1.1rem;
+  border-radius: 6px;
+  font-size    : 0.875rem;
+  font-weight  : 500;
+  cursor       : pointer;
+  border       : none;
+  transition   : background 0.15s;
+}
+.scp-btn--secondary { background: #f1f5f9; color: #475569; }
+.scp-btn--secondary:hover { background: #e2e8f0; }
+.scp-btn--primary   { background: #6366f1; color: #fff; }
+.scp-btn--primary:hover { background: #4f46e5; }
+.scp-btn:disabled   { opacity: 0.6; cursor: not-allowed; }
+.scp-error   { background: #fef2f2; color: #dc2626; border-radius: 6px; padding: 0.5rem 0.75rem; font-size: 0.82rem; }
+.scp-success { background: #f0fdf4; color: #16a34a; border-radius: 6px; padding: 0.5rem 0.75rem; font-size: 0.82rem; }
 
 .admin-area {
   flex     : 1;

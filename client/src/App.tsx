@@ -6,11 +6,83 @@ import { Login } from './components/Login';
 import { UserManager } from './components/UserManager';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/useAuth';
-import { listVideosFromS3, deleteVideoFromS3, getAllFolders, createFolder, deleteFolder, renameFolder } from './services/apiService';
+import { listVideosFromS3, deleteVideoFromS3, getAllFolders, createFolder, deleteFolder, renameFolder, changeOwnPassword } from './services/apiService';
 import type { VideoFile } from './services/apiService';
 import './App.css';
 
 const APP_VERSION = '2.4';
+
+// ─── Self-service password change modal ──────────────────────────────────────
+function SelfChangePasswordModal({ username, onClose }: { username: string; onClose: () => void }) {
+  const [currentPw,      setCurrentPw]      = useState('');
+  const [newPw,          setNewPw]          = useState('');
+  const [showCurrent,    setShowCurrent]    = useState(false);
+  const [showNew,        setShowNew]        = useState(false);
+  const [saving,         setSaving]         = useState(false);
+  const [error,          setError]          = useState<string | null>(null);
+  const [success,        setSuccess]        = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentPw || !newPw.trim()) {
+      setError('Completa ambos campos.');
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      await changeOwnPassword(currentPw, newPw.trim());
+      setSuccess(true);
+      setTimeout(onClose, 1200);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al cambiar contraseña');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="scp-overlay" onClick={onClose}>
+      <div className="scp-modal" onClick={e => e.stopPropagation()}>
+        <div className="scp-header">
+          <h3>Cambiar contraseña</h3>
+          <button className="scp-close" onClick={onClose}>✕</button>
+        </div>
+        <form onSubmit={handleSubmit} className="scp-body">
+          {error   && <div className="scp-error">{error}</div>}
+          {success && <div className="scp-success">✔ Contraseña actualizada</div>}
+          <p className="scp-user">👤 <strong>{username}</strong></p>
+          <div className="scp-field">
+            <label>Contraseña actual</label>
+            <div className="scp-pw-wrap">
+              <input type={showCurrent ? 'text' : 'password'} value={currentPw}
+                onChange={e => setCurrentPw(e.target.value)} placeholder="••••••••" autoFocus />
+              <button type="button" onClick={() => setShowCurrent(v => !v)} title="Ver">
+                {showCurrent ? '🙈' : '👁️'}
+              </button>
+            </div>
+          </div>
+          <div className="scp-field">
+            <label>Nueva contraseña</label>
+            <div className="scp-pw-wrap">
+              <input type={showNew ? 'text' : 'password'} value={newPw}
+                onChange={e => setNewPw(e.target.value)} placeholder="••••••••" />
+              <button type="button" onClick={() => setShowNew(v => !v)} title="Ver">
+                {showNew ? '🙈' : '👁️'}
+              </button>
+            </div>
+          </div>
+          <div className="scp-footer">
+            <button type="button" className="scp-btn scp-btn--secondary" onClick={onClose}>Cancelar</button>
+            <button type="submit"  className="scp-btn scp-btn--primary"   disabled={saving}>
+              {saving ? 'Guardando...' : 'Guardar'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 function VideoManagerContent() {
   const { isAuthenticated, loading: authLoading, username, logout, isAdmin, permissions } = useAuth();
@@ -21,7 +93,8 @@ function VideoManagerContent() {
   const [loading, setLoading] = useState(false);
   const [loadingFolders, setLoadingFolders] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [view, setView] = useState<'videos' | 'admin'>('videos');
+  const [view, setView]                         = useState<'videos' | 'admin'>('videos');
+  const [showSelfPasswordModal, setShowSelfPasswordModal] = useState(false);
 
   const loadVideos = async (forceRefresh: boolean = false) => {
     // Check cache first
@@ -212,12 +285,25 @@ function VideoManagerContent() {
                 {effectiveView === 'admin' ? '🎥 Videos' : '⚙️ Usuarios'}
               </button>
             )}
-            <span className="username">👤 {username}{isAdmin && ' (Admin)'}</span>
+            <button
+              className="username-button"
+              onClick={() => setShowSelfPasswordModal(true)}
+              title="Cambiar mi contraseña"
+            >
+              👤 {username}{isAdmin && ' (Admin)'}
+            </button>
             <button onClick={logout} className="logout-button">Logout</button>
           </div>
         </div>
         <span className="app-version">v{APP_VERSION}</span>
       </header>
+
+      {showSelfPasswordModal && username && (
+        <SelfChangePasswordModal
+          username={username}
+          onClose={() => setShowSelfPasswordModal(false)}
+        />
+      )}
 
       {effectiveView === 'admin' ? (
         <div className="admin-area">

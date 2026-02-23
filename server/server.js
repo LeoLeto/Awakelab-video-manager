@@ -200,6 +200,30 @@ app.get('/api/auth/verify', authenticateToken, (req, res) => {
   res.json({ valid: true, username: req.user.username, isAdmin: req.user.isAdmin, permissions: req.user.permissions });
 });
 
+// Self-service password change (any authenticated user)
+app.put('/api/user/password', authenticateToken, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Se requieren la contraseña actual y la nueva contraseña' });
+    }
+    if (newPassword.trim().length < 1) {
+      return res.status(400).json({ error: 'La nueva contraseña no puede estar vacía' });
+    }
+    const { users } = readUsers();
+    const idx = users.findIndex(u => u.username === req.user.username);
+    if (idx === -1) return res.status(404).json({ error: 'Usuario no encontrado' });
+    const match = await bcrypt.compare(currentPassword, users[idx].password);
+    if (!match) return res.status(401).json({ error: 'La contraseña actual es incorrecta' });
+    users[idx].password = await bcrypt.hash(newPassword.trim(), 10);
+    saveUsers({ users });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error changing own password:', err);
+    res.status(500).json({ error: 'Error al cambiar contraseña' });
+  }
+});
+
 // ─── Admin: User management ──────────────────────────────────────────────────
 
 // List all users

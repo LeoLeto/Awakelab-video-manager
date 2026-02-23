@@ -294,3 +294,15 @@ export const adminDeleteUser = async (username: string): Promise<void> => {
   }
 };
 
+export const changeOwnPassword = async (currentPassword: string, newPassword: string): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/user/password`, {
+    method : 'PUT',
+    headers: getAuthHeaders(),
+    body   : JSON.stringify({ currentPassword, newPassword }),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ error: 'Failed to change password' }));
+    throw new Error(err.error || 'Failed to change password');
+  }
+};
+
