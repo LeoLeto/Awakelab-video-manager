@@ -131,6 +131,13 @@ const authenticateToken = (req, res, next) => {
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
     if (err) return res.status(403).json({ error: 'Invalid or expired token' });
+
+    // Reject tokens for users that no longer exist in the store
+    const { users } = readUsers();
+    if (!users.find(u => u.username === user.username)) {
+      return res.status(401).json({ error: 'User no longer exists' });
+    }
+
     req.user = user; // { username, isAdmin, permissions }
     next();
   });

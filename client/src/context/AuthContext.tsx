@@ -1,5 +1,6 @@
-import { createContext, useState, useEffect } from 'react';
+import { createContext, useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
+import { setUnauthorizedHandler } from '../services/apiService';
 
 export interface UserPermissions {
   directoryAccess    : 'all' | 'specific';
@@ -100,7 +101,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     localStorage.setItem('auth_username', data.username);
   };
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setToken(null);
     setUsername(null);
     setIsAuthenticated(false);
@@ -108,7 +109,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setPermissions(DEFAULT_PERMISSIONS);
     localStorage.removeItem('auth_token');
     localStorage.removeItem('auth_username');
-  };
+  }, []);
+
+  // Register logout as the global 401 handler so deleted-user sessions
+  // are cleared immediately on their next API call
+  useEffect(() => {
+    setUnauthorizedHandler(logout);
+  }, [logout]);
 
   return (
     <AuthContext.Provider value={{

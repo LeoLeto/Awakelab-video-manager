@@ -9,6 +9,10 @@ export interface VideoFile {
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
+// Callback fired whenever any authenticated request returns 401
+let _onUnauthorized: (() => void) | null = null;
+export const setUnauthorizedHandler = (fn: () => void) => { _onUnauthorized = fn; };
+
 // Helper function to get auth headers
 const getAuthHeaders = (): HeadersInit => {
   const token = localStorage.getItem('auth_token');
@@ -16,6 +20,15 @@ const getAuthHeaders = (): HeadersInit => {
     'Content-Type': 'application/json',
     ...(token && { 'Authorization': `Bearer ${token}` }),
   };
+};
+
+// Authenticated fetch — triggers logout if the server returns 401
+const authFetch = async (input: RequestInfo, init?: RequestInit): Promise<Response> => {
+  const res = await fetch(input, init);
+  if (res.status === 401 && _onUnauthorized) {
+    _onUnauthorized();
+  }
+  return res;
 };
 
 // Helper function to get auth token for XHR requests
@@ -26,7 +39,7 @@ const getAuthToken = (): string | null => {
 export const listVideosFromS3 = async (folder: string = ''): Promise<VideoFile[]> => {
   try {
     const token = getAuthToken();
-    const response = await fetch(`${API_BASE_URL}/videos?folder=${encodeURIComponent(folder)}`, {
+    const response = await authFetch(`${API_BASE_URL}/videos?folder=${encodeURIComponent(folder)}`, {
       headers: token ? { 'Authorization': `Bearer ${token}` } : {},
     });
     if (!response.ok) {
@@ -65,7 +78,10 @@ export const uploadVideoToS3 = async (
       });
 
       xhr.addEventListener('load', () => {
-        if (xhr.status === 200) {
+        if (xhr.status === 401 && _onUnauthorized) {
+          _onUnauthorized();
+          reject(new Error('Unauthorized'));
+        } else if (xhr.status === 200) {
           const response = JSON.parse(xhr.responseText);
           resolve(response.key);
         } else {
@@ -91,7 +107,7 @@ export const uploadVideoToS3 = async (
 
 export const deleteVideoFromS3 = async (key: string): Promise<void> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/videos/${encodeURIComponent(key)}`, {
+    const response = await authFetch(`${API_BASE_URL}/videos/${encodeURIComponent(key)}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });
@@ -106,7 +122,7 @@ export const deleteVideoFromS3 = async (key: string): Promise<void> => {
 
 export const renameVideo = async (key: string, newName: string): Promise<{ newKey: string; url: string }> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/videos/${encodeURIComponent(key)}/rename`, {
+    const response = await authFetch(`${API_BASE_URL}/videos/${encodeURIComponent(key)}/rename`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify({ newName }),
@@ -123,7 +139,7 @@ export const renameVideo = async (key: string, newName: string): Promise<{ newKe
 
 export const moveVideo = async (key: string, targetFolder: string): Promise<{ newKey: string; url: string }> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/videos/${encodeURIComponent(key)}/move`, {
+    const response = await authFetch(`${API_BASE_URL}/videos/${encodeURIComponent(key)}/move`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify({ targetFolder }),
@@ -141,7 +157,7 @@ export const moveVideo = async (key: string, targetFolder: string): Promise<{ ne
 
 export const restoreVideo = async (key: string): Promise<{ restoredKey: string; url: string }> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/videos/${encodeURIComponent(key)}/restore`, {
+    const response = await authFetch(`${API_BASE_URL}/videos/${encodeURIComponent(key)}/restore`, {
       method: 'PUT',
       headers: getAuthHeaders(),
     });
@@ -159,7 +175,7 @@ export const restoreVideo = async (key: string): Promise<{ restoredKey: string; 
 export const getAllFolders = async (): Promise<string[]> => {
   try {
     const token = getAuthToken();
-    const response = await fetch(`${API_BASE_URL}/folders`, {
+    const response = await authFetch(`${API_BASE_URL}/folders`, {
       headers: token ? { 'Authorization': `Bearer ${token}` } : {},
     });
     if (!response.ok) {
@@ -175,7 +191,7 @@ export const getAllFolders = async (): Promise<string[]> => {
 
 export const createFolder = async (folderName: string): Promise<void> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/folders`, {
+    const response = await authFetch(`${API_BASE_URL}/folders`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ folderName }),
@@ -191,7 +207,7 @@ export const createFolder = async (folderName: string): Promise<void> => {
 
 export const renameFolder = async (oldName: string, newName: string): Promise<void> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/folders/rename`, {
+    const response = await authFetch(`${API_BASE_URL}/folders/rename`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify({ oldName, newName }),
@@ -208,7 +224,7 @@ export const renameFolder = async (oldName: string, newName: string): Promise<vo
 export const deleteFolder = async (folderName: string): Promise<void> => {
   try {
     const token = getAuthToken();
-    const response = await fetch(`${API_BASE_URL}/folders/${encodeURIComponent(folderName)}`, {
+    const response = await authFetch(`${API_BASE_URL}/folders/${encodeURIComponent(folderName)}`, {
       method: 'DELETE',
       headers: token ? { 'Authorization': `Bearer ${token}` } : {},
     });
@@ -239,7 +255,7 @@ export interface AdminUser {
 }
 
 export const adminGetUsers = async (): Promise<AdminUser[]> => {
-  const response = await fetch(`${API_BASE_URL}/admin/users`, {
+  const response = await authFetch(`${API_BASE_URL}/admin/users`, {
     headers: getAuthHeaders(),
   });
   if (!response.ok) throw new Error('Failed to fetch users');
@@ -253,7 +269,7 @@ export const adminCreateUser = async (
   isAdmin: boolean,
   permissions: UserPermissions,
 ): Promise<AdminUser> => {
-  const response = await fetch(`${API_BASE_URL}/admin/users`, {
+  const response = await authFetch(`${API_BASE_URL}/admin/users`, {
     method : 'POST',
     headers: getAuthHeaders(),
     body   : JSON.stringify({ username, password, isAdmin, permissions }),
@@ -270,7 +286,7 @@ export const adminUpdateUser = async (
   username: string,
   updates: { isAdmin?: boolean; permissions?: Partial<UserPermissions>; password?: string },
 ): Promise<AdminUser> => {
-  const response = await fetch(`${API_BASE_URL}/admin/users/${encodeURIComponent(username)}`, {
+  const response = await authFetch(`${API_BASE_URL}/admin/users/${encodeURIComponent(username)}`, {
     method : 'PUT',
     headers: getAuthHeaders(),
     body   : JSON.stringify(updates),
@@ -284,7 +300,7 @@ export const adminUpdateUser = async (
 };
 
 export const adminDeleteUser = async (username: string): Promise<void> => {
-  const response = await fetch(`${API_BASE_URL}/admin/users/${encodeURIComponent(username)}`, {
+  const response = await authFetch(`${API_BASE_URL}/admin/users/${encodeURIComponent(username)}`, {
     method : 'DELETE',
     headers: getAuthHeaders(),
   });
@@ -295,7 +311,7 @@ export const adminDeleteUser = async (username: string): Promise<void> => {
 };
 
 export const changeOwnPassword = async (currentPassword: string, newPassword: string): Promise<void> => {
-  const response = await fetch(`${API_BASE_URL}/user/password`, {
+  const response = await authFetch(`${API_BASE_URL}/user/password`, {
     method : 'PUT',
     headers: getAuthHeaders(),
     body   : JSON.stringify({ currentPassword, newPassword }),
