@@ -52,7 +52,7 @@ export const VideoItem = ({ video, onDelete, onRename, folders, canDelete = true
       setShowDeleteConfirm(false);
     } catch (error) {
       setDeleting(false);
-      alert('Failed to delete video');
+      alert('Error al eliminar el archivo');
     }
   };
 
@@ -84,7 +84,7 @@ export const VideoItem = ({ video, onDelete, onRename, folders, canDelete = true
       onRename();
       setIsRenaming(false);
     } catch (error) {
-      alert('Failed to rename video');
+      alert('Error al renombrar el archivo');
     } finally {
       setRenaming(false);
     }
@@ -112,7 +112,7 @@ export const VideoItem = ({ video, onDelete, onRename, folders, canDelete = true
       setShowMoveDialog(false);
       onRename(); // Refresh the video list
     } catch (error: any) {
-      alert(error.message || 'Failed to move video');
+      alert(error.message || 'Error al mover el archivo');
       setMoving(false);
     }
   };
@@ -130,7 +130,7 @@ export const VideoItem = ({ video, onDelete, onRename, folders, canDelete = true
       await restoreVideo(video.key);
       onRename(); // Refresh the video list
     } catch (error: any) {
-      alert(error.message || 'Failed to restore video');
+      alert(error.message || 'Error al restaurar el archivo');
     } finally {
       setRestoring(false);
     }
@@ -150,7 +150,7 @@ export const VideoItem = ({ video, onDelete, onRename, folders, canDelete = true
         {isVideoFile(video.name) ? (
           <video controls preload="metadata">
             <source src={video.url} type="video/mp4" />
-            Your browser does not support the video tag.
+            Tu navegador no es compatible con la etiqueta de video.
           </video>
         ) : (
           <div className="file-icon-preview">
@@ -200,7 +200,7 @@ export const VideoItem = ({ video, onDelete, onRename, folders, canDelete = true
         )}
         <p className="video-size">{formatFileSize(video.size)}</p>
         <p className="video-date">
-          {video.lastModified ? new Date(video.lastModified).toLocaleDateString() : 'Unknown date'}
+          {video.lastModified ? new Date(video.lastModified).toLocaleDateString() : 'Fecha desconocida'}
         </p>
       </div>
 
@@ -210,7 +210,7 @@ export const VideoItem = ({ video, onDelete, onRename, folders, canDelete = true
           null
         ) : showMoveDialog ? (
           <div className="move-dialog">
-            <label htmlFor="folder-select">Move to:</label>
+            <label htmlFor="folder-select">Mover a:</label>
             <select
               id="folder-select"
               value={selectedFolder}
@@ -229,14 +229,14 @@ export const VideoItem = ({ video, onDelete, onRename, folders, canDelete = true
                 onClick={handleMove}
                 disabled={moving || selectedFolder === video.folder}
               >
-                {moving ? '⏳ Moving...' : '✓ Move'}
+                {moving ? '⏳ Moviendo...' : '✓ Mover'}
               </button>
               <button 
                 className="cancel-move-btn" 
                 onClick={handleCancelMove}
                 disabled={moving}
               >
-                ✕ Cancel
+                ✕ Cancelar
               </button>
             </div>
           </div>
@@ -249,17 +249,17 @@ export const VideoItem = ({ video, onDelete, onRename, folders, canDelete = true
                   className="restore-btn"
                   onClick={handleRestore}
                   disabled={restoring}
-                  title="Restore video"
+                  title="Restaurar archivo"
                 >
-                  {restoring ? '⏳ Restoring...' : '♻️ Restore'}
+                  {restoring ? '⏳ Restaurando...' : '♻️ Restaurar'}
                 </button>
                 {canDelete && (
                   <button
                     className="delete-btn"
                     onClick={() => setShowDeleteConfirm(true)}
-                    title="Permanently delete video"
+                    title="Eliminar permanentemente"
                   >
-                    🗑️ Delete Forever
+                    🗑️ Eliminar Para Siempre
                   </button>
                 )}
               </>
@@ -269,33 +269,33 @@ export const VideoItem = ({ video, onDelete, onRename, folders, canDelete = true
                 <button
                   className="copy-url-btn"
                   onClick={handleCopyUrl}
-                  title="Copy embed URL"
+                  title="Copiar URL"
                 >
-                  {copied ? '✓ Copied!' : '📋 Copy URL'}
+                  {copied ? '✓ Copiado!' : '📋 Copiar URL'}
                 </button>
                 <button
                   className="rename-btn"
                   onClick={handleStartRename}
-                  title="Rename video"
+                  title="Renombrar archivo"
                 >
-                  ✏️ Rename
+                  ✏️ Renombrar
                 </button>
                 {canMove && (
                   <button
                     className="move-btn"
                     onClick={handleStartMove}
-                    title="Move to another folder"
+                    title="Mover a otra carpeta"
                   >
-                    📁 Move
+                    📁 Mover
                   </button>
                 )}
                 {canDelete && (
                   <button
                     className="delete-btn"
                     onClick={() => setShowDeleteConfirm(true)}
-                    title="Delete video"
+                    title="Eliminar archivo"
                   >
-                    🗑️ Delete
+                    🗑️ Eliminar
                   </button>
                 )}
               </>
@@ -308,14 +308,14 @@ export const VideoItem = ({ video, onDelete, onRename, folders, canDelete = true
               onClick={handleDelete}
               disabled={deleting}
             >
-              {deleting ? '⏳ Deleting...' : (isInRecycleBin ? 'Permanently Delete' : 'Confirm')}
+              {deleting ? '⏳ Eliminando...' : (isInRecycleBin ? 'Eliminar Permanentemente' : 'Confirmar')}
             </button>
             <button
               className="cancel-delete"
               onClick={() => setShowDeleteConfirm(false)}
               disabled={deleting}
             >
-              Cancel
+              Cancelar
             </button>
           </div>
         )}

@@ -20,7 +20,7 @@ export const Login = () => {
     try {
       await login(username, password);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      setError(err instanceof Error ? err.message : 'Error al iniciar sesión');
     } finally {
       setLoading(false);
     }
@@ -32,18 +32,18 @@ export const Login = () => {
       <div className="login-box">
         <div className="login-header">
           <h1>🎥 Video Manager</h1>
-          <p>Please sign in to continue</p>
+          <p>Ingresa tu usuario para continuar</p>
         </div>
         
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group">
-            <label htmlFor="username">Username</label>
+            <label htmlFor="username">Usuario</label>
             <input
               id="username"
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter your username"
+              placeholder="Ingresa tu usuario"
               required
               autoComplete="username"
               disabled={loading}
@@ -51,14 +51,14 @@ export const Login = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">Password</label>
+            <label htmlFor="password">Contraseña</label>
             <div className="password-input-wrapper">
               <input
                 id="password"
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
+                placeholder="Ingresa tu contraseña"
                 required
                 autoComplete="current-password"
                 disabled={loading}
@@ -68,7 +68,7 @@ export const Login = () => {
                 className="toggle-password"
                 onClick={() => setShowPassword(!showPassword)}
                 disabled={loading}
-                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
               >
                 {showPassword ? '👁️' : '👁️‍🗨️'}
               </button>
@@ -78,12 +78,12 @@ export const Login = () => {
           {error && <div className="error-message">{error}</div>}
 
           <button type="submit" className="login-button" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? 'Ingresando...' : 'Ingresar'}
           </button>
         </form>
 
         <div className="login-footer">
-          <p>Contact your administrator for access</p>
+          <p>Contacta a tu administrador para obtener acceso</p>
         </div>
       </div>
     </div>

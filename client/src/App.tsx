@@ -10,7 +10,7 @@ import { listVideosFromS3, deleteVideoFromS3, getAllFolders, createFolder, delet
 import type { VideoFile } from './services/apiService';
 import './App.css';
 
-const APP_VERSION = '2.4';
+const APP_VERSION = '2.5';
 
 // ─── Self-service password change modal ──────────────────────────────────────
 function SelfChangePasswordModal({ username, onClose }: { username: string; onClose: () => void }) {
@@ -122,7 +122,7 @@ function VideoManagerContent() {
       // Update cache
       setVideoCache(prev => new Map(prev).set(currentFolder, filteredVideos));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load videos');
+      setError(err instanceof Error ? err.message : 'Error al cargar los videos');
     } finally {
       setLoading(false);
     }
@@ -166,7 +166,7 @@ function VideoManagerContent() {
       setVideoCache(new Map());
       loadVideos(true); // Force refresh after delete
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete video');
+      setError(err instanceof Error ? err.message : 'Error al eliminar el archivo');
     }
   };
 
@@ -176,7 +176,7 @@ function VideoManagerContent() {
 
   const handleCreateFolder = async (folderName: string) => {
     if (folders.includes(folderName)) {
-      setError('Folder already exists');
+      setError('La carpeta ya existe');
       return;
     }
     
@@ -186,13 +186,13 @@ function VideoManagerContent() {
       setCurrentFolder(folderName);
       // New folder will be empty, no need to fetch
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create folder');
+      setError(err instanceof Error ? err.message : 'Error al crear la carpeta');
     }
   };
 
   const handleRenameFolder = async (oldName: string, newName: string) => {
     if (folders.includes(newName)) {
-      setError('A folder with that name already exists');
+      setError('Ya existe una carpeta con ese nombre');
       return;
     }
 
@@ -214,7 +214,7 @@ function VideoManagerContent() {
         setCurrentFolder(newName);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to rename folder');
+      setError(err instanceof Error ? err.message : 'Error al renombrar la carpeta');
     }
   };
 
@@ -225,8 +225,8 @@ function VideoManagerContent() {
       const videosInFolder = folderVideos.filter(video => video.folder === folderName);
       
       if (videosInFolder.length > 0) {
-        setError('Cannot delete folder that contains videos. Please delete or move all videos first.');
-        throw new Error('Cannot delete folder that contains videos. Please delete or move all videos first.');
+        setError('No se puede eliminar una carpeta que contiene archivos. Elimina o mueve todos los archivos primero.');
+        throw new Error('No se puede eliminar una carpeta que contiene archivos. Elimina o mueve todos los archivos primero.');
       }
 
       await deleteFolder(folderName);
@@ -243,7 +243,7 @@ function VideoManagerContent() {
         setCurrentFolder('Uncategorized');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete folder');
+      setError(err instanceof Error ? err.message : 'Error al eliminar la carpeta');
       throw err; // Re-throw so FolderManager can handle it
     }
   };
@@ -255,7 +255,7 @@ function VideoManagerContent() {
         <div className="loading-content">
           <h1>🎥 Video Manager</h1>
           <div className="spinner"></div>
-          <p>Loading...</p>
+          <p>Cargando...</p>
         </div>
       </div>
     );
@@ -274,7 +274,7 @@ function VideoManagerContent() {
         <div className="header-content">
           <div className="header-title">
             <h1>🎥 Video Manager</h1>
-            <p>Upload, organize, and manage your videos with AWS S3</p>
+            <p>Sube, organiza y gestiona tus videos con AWS S3</p>
           </div>
           <div className="header-user">
             {isAdmin && (
@@ -292,7 +292,7 @@ function VideoManagerContent() {
             >
               👤 {username}{isAdmin && ' (Admin)'}
             </button>
-            <button onClick={logout} className="logout-button">Logout</button>
+            <button onClick={logout} className="logout-button">Cerrar sesión</button>
           </div>
         </div>
         <span className="app-version">v{APP_VERSION}</span>

@@ -159,12 +159,12 @@ export const FolderManager = ({
   return (
     <div className="folder-manager">
       <div className="folder-header">
-        <h3>Folders</h3>
+        <h3>Carpetas</h3>
         <button
           className="create-folder-btn"
           onClick={() => setIsCreating(!isCreating)}
         >
-          {isCreating ? 'Cancel' : '+ New Folder'}
+          {isCreating ? 'Cancelar' : '+ Nueva Carpeta'}
         </button>
       </div>
 
@@ -176,14 +176,14 @@ export const FolderManager = ({
             onChange={(e) => setNewFolderName(e.target.value)}
             placeholder={
               currentFolder && currentFolder !== 'Uncategorized'
-                ? `Subfolder of "${getDisplayName(currentFolder)}"`
-                : "Folder name"
+                ? `Subcarpeta de "${getDisplayName(currentFolder)}"`
+                : "Nombre de carpeta"
             }
             onKeyPress={(e) => e.key === 'Enter' && !creating && handleCreateFolder()}
             disabled={creating}
           />
           <button onClick={handleCreateFolder} disabled={creating}>
-            {creating ? '⏳ Creating...' : 'Create'}
+            {creating ? '⏳ Creando...' : 'Crear'}
           </button>
         </div>
       )}
@@ -197,7 +197,7 @@ export const FolderManager = ({
         }}
       >
         {loadingFolders ? (
-          <div className="loading-folders">⏳ Loading folders...</div>
+          <div className="loading-folders">⏳ Cargando carpetas...</div>
         ) : (
           folders
             .filter(folder => isFolderVisible(folder))
@@ -252,7 +252,7 @@ export const FolderManager = ({
                         disabled={renamingInProgress}
                       />
                       {renamingInProgress && (
-                        <span className="renaming-overlay">⏳ Renaming...</span>
+                        <span className="renaming-overlay">⏳ Renombrando...</span>
                       )}
                     </div>
                   ) : (
@@ -282,7 +282,7 @@ export const FolderManager = ({
                           <button
                             className="folder-action-btn"
                             onClick={(e) => handleStartRename(folder, e)}
-                            title="Rename folder"
+                            title="Renombrar carpeta"
                             disabled={deletingFolder === folder}
                           >
                             ✏️
@@ -290,7 +290,7 @@ export const FolderManager = ({
                           <button
                             className="folder-action-btn"
                             onClick={(e) => handleDeleteClick(folder, e)}
-                            title="Delete folder"
+                            title="Eliminar carpeta"
                             disabled={deletingFolder === folder}
                           >
                             {deletingFolder === folder ? '⏳' : '🗑️'}

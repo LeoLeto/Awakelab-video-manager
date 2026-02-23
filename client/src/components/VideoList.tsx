@@ -15,7 +15,7 @@ export const VideoList = ({ videos, onDelete, onRename, loading, folders, canDel
   if (loading) {
     return (
       <div className="video-list">
-        <div className="loading">Loading files...</div>
+        <div className="loading">Cargando archivos...</div>
       </div>
     );
   }
@@ -24,8 +24,8 @@ export const VideoList = ({ videos, onDelete, onRename, loading, folders, canDel
     return (
       <div className="video-list">
         <div className="empty-state">
-          <p>No files in this folder</p>
-          <p className="empty-hint">Upload a file to get started</p>
+          <p>No hay archivos en esta carpeta</p>
+          <p className="empty-hint">Sube un archivo para comenzar</p>
         </div>
       </div>
     );

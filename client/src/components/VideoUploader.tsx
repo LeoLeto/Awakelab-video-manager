@@ -62,7 +62,7 @@ export const VideoUploader = ({ currentFolder, onUploadSuccess }: VideoUploaderP
             idx === i ? { 
               ...fp, 
               status: 'error', 
-              error: err instanceof Error ? err.message : 'Upload failed' 
+              error: err instanceof Error ? err.message : 'Error al subir el archivo' 
             } : fp
           )
         );
@@ -95,11 +95,11 @@ export const VideoUploader = ({ currentFolder, onUploadSuccess }: VideoUploaderP
           style={{ display: 'none' }}
         />
         <label htmlFor="video-upload" className={`upload-button ${uploading ? 'disabled' : ''}`}>
-          {uploading ? 'Uploading...' : 'Upload Files'}
+          {uploading ? 'Subiendo...' : 'Subir Archivos'}
         </label>
         
         {currentFolder !== 'Uncategorized' && (
-          <span className="folder-info">to folder: <strong>{currentFolder}</strong></span>
+          <span className="folder-info">a carpeta: <strong>{currentFolder}</strong></span>
         )}
       </div>
 
@@ -111,8 +111,8 @@ export const VideoUploader = ({ currentFolder, onUploadSuccess }: VideoUploaderP
                 <span className="file-name">{fp.name}</span>
                 <span className={`file-status ${fp.status}`}>
                   {fp.status === 'uploading' && `${fp.progress}%`}
-                  {fp.status === 'completed' && '✓ Complete'}
-                  {fp.status === 'error' && '✕ Failed'}
+                  {fp.status === 'completed' && '✓ Completado'}
+                  {fp.status === 'error' && '✕ Fallido'}
                 </span>
               </div>
               {fp.status === 'uploading' && (
