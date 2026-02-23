@@ -3,16 +3,17 @@ import { VideoUploader } from './components/VideoUploader';
 import { FolderManager } from './components/FolderManager';
 import { VideoList } from './components/VideoList';
 import { Login } from './components/Login';
+import { UserManager } from './components/UserManager';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/useAuth';
 import { listVideosFromS3, deleteVideoFromS3, getAllFolders, createFolder, deleteFolder, renameFolder } from './services/apiService';
 import type { VideoFile } from './services/apiService';
 import './App.css';
 
-const APP_VERSION = '2.3';
+const APP_VERSION = '2.4';
 
 function VideoManagerContent() {
-  const { isAuthenticated, loading: authLoading, username, logout } = useAuth();
+  const { isAuthenticated, loading: authLoading, username, logout, isAdmin, permissions } = useAuth();
   const [videos, setVideos] = useState<VideoFile[]>([]);
   const [videoCache, setVideoCache] = useState<Map<string, VideoFile[]>>(new Map());
   const [folders, setFolders] = useState<string[]>(['Uncategorized', 'Recycle Bin']);
@@ -20,6 +21,7 @@ function VideoManagerContent() {
   const [loading, setLoading] = useState(false);
   const [loadingFolders, setLoadingFolders] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [view, setView] = useState<'videos' | 'admin'>('videos');
 
   const loadVideos = async (forceRefresh: boolean = false) => {
     // Check cache first
@@ -199,53 +201,69 @@ function VideoManagerContent() {
             <p>Upload, organize, and manage your videos with AWS S3</p>
           </div>
           <div className="header-user">
-            <span className="username">👤 {username}</span>
+            {isAdmin && (
+              <button
+                onClick={() => setView(v => v === 'admin' ? 'videos' : 'admin')}
+                className={`admin-nav-button ${view === 'admin' ? 'admin-nav-button--active' : ''}`}
+              >
+                {view === 'admin' ? '🎥 Videos' : '⚙️ Usuarios'}
+              </button>
+            )}
+            <span className="username">👤 {username}{isAdmin && ' (Admin)'}</span>
             <button onClick={logout} className="logout-button">Logout</button>
           </div>
         </div>
         <span className="app-version">v{APP_VERSION}</span>
       </header>
 
-      <div className="app-container">
-        <aside className="sidebar">
-          <FolderManager
-            folders={folders}
-            currentFolder={currentFolder}
-            onFolderChange={handleFolderChange}
-            onCreateFolder={handleCreateFolder}
-            onRenameFolder={handleRenameFolder}
-            onDeleteFolder={handleDeleteFolder}
-            loadingFolders={loadingFolders}
-          />
-        </aside>
-
-        <main className="main-content">
-          {currentFolder !== 'Recycle Bin' && (
-            <VideoUploader
+      {view === 'admin' ? (
+        <div className="admin-area">
+          <UserManager folders={folders} />
+        </div>
+      ) : (
+        <div className="app-container">
+          <aside className="sidebar">
+            <FolderManager
+              folders={folders}
               currentFolder={currentFolder}
-              onUploadSuccess={handleUploadSuccess}
+              onFolderChange={handleFolderChange}
+              onCreateFolder={handleCreateFolder}
+              onRenameFolder={handleRenameFolder}
+              onDeleteFolder={handleDeleteFolder}
+              loadingFolders={loadingFolders}
             />
-          )}
+          </aside>
 
-          {error && (
-            <div className="error-banner">
-              {error}
-              <button onClick={() => setError(null)}>✕</button>
-            </div>
-          )}
+          <main className="main-content">
+            {currentFolder !== 'Recycle Bin' && (isAdmin || permissions.canUpload) && (
+              <VideoUploader
+                currentFolder={currentFolder}
+                onUploadSuccess={handleUploadSuccess}
+              />
+            )}
 
-          <VideoList
-            videos={videos}
-            onDelete={handleDelete}
-            onRename={() => {
-              setVideoCache(new Map()); // Clear cache when video is renamed/moved/restored
-              loadVideos(true);
-            }}
-            loading={loading}
-            folders={folders}
-          />
-        </main>
-      </div>
+            {error && (
+              <div className="error-banner">
+                {error}
+                <button onClick={() => setError(null)}>✕</button>
+              </div>
+            )}
+
+            <VideoList
+              videos={videos}
+              onDelete={handleDelete}
+              onRename={() => {
+                setVideoCache(new Map());
+                loadVideos(true);
+              }}
+              loading={loading}
+              folders={folders}
+              canDelete={isAdmin || permissions.canDelete}
+              canMove={isAdmin || permissions.canMove}
+            />
+          </main>
+        </div>
+      )}
     </div>
   );
 }

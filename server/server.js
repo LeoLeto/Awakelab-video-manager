@@ -4,6 +4,9 @@ import multer from 'multer';
 import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { 
   S3Client, 
   PutObjectCommand, 
@@ -14,6 +17,9 @@ import {
 } from '@aws-sdk/client-s3';
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname  = path.dirname(__filename);
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -48,80 +54,141 @@ const CLOUDFRONT_DOMAIN = process.env.CLOUDFRONT_DOMAIN || `${BUCKET_NAME}.s3.${
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const JWT_EXPIRY = process.env.JWT_EXPIRY || '24h';
 
-// Load users from environment variables
-const loadUsers = () => {
-  const users = {};
+// ─── User store (file-based) ────────────────────────────────────────────────
+
+const USERS_FILE = path.join(__dirname, 'data', 'users.json');
+
+const defaultPermissions = () => ({
+  directoryAccess : 'all',   // 'all' | 'specific'
+  allowedDirectories: [],
+  canUpload : true,
+  canDelete : true,
+  canMove   : true,
+});
+
+const readUsers = () => {
+  try {
+    if (fs.existsSync(USERS_FILE)) {
+      return JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
+    }
+  } catch (e) {
+    console.error('Failed to read users file:', e.message);
+  }
+  return { users: [] };
+};
+
+const saveUsers = (data) => {
+  try {
+    const dir = path.dirname(USERS_FILE);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(USERS_FILE, JSON.stringify(data, null, 2), 'utf8');
+  } catch (e) {
+    console.error('Failed to save users file:', e.message);
+  }
+};
+
+/** Seed users.json from ENV vars if the file doesn't exist yet */
+const seedFromEnv = () => {
+  if (fs.existsSync(USERS_FILE)) return;
+  const users = [];
   let i = 1;
   while (process.env[`USER_${i}`]) {
     const [username, hashedPassword] = process.env[`USER_${i}`].split(':');
     if (username && hashedPassword) {
-      users[username] = hashedPassword;
+      users.push({
+        username,
+        password   : hashedPassword,
+        isAdmin    : true,           // legacy env-var users become admins
+        permissions: defaultPermissions(),
+      });
     }
     i++;
   }
-  return users;
+  if (users.length > 0) {
+    saveUsers({ users });
+    console.log(`✅ Seeded users.json from ENV with ${users.length} user(s).`);
+  } else {
+    console.warn('⚠️  No ENV users found during seed. Create users via the admin API.');
+  }
 };
 
-const users = loadUsers();
+seedFromEnv();
 
 // Debug: Log loaded users (without passwords)
-console.log('Loaded users:', Object.keys(users));
-if (Object.keys(users).length === 0) {
-  console.warn('⚠️  WARNING: No users loaded from environment variables!');
-  console.warn('⚠️  Make sure your .env file has USER_1, USER_2, etc.');
+const { users: _dbg } = readUsers();
+console.log('Loaded users:', _dbg.map(u => u.username));
+if (_dbg.length === 0) {
+  console.warn('⚠️  WARNING: No users found. Add USER_1=username:hash to .env and restart once.');
 }
 
-// Auth middleware
+// ─── Middleware ──────────────────────────────────────────────────────────────
+
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+  const token = authHeader && authHeader.split(' ')[1];
 
-  if (!token) {
-    return res.status(401).json({ error: 'Access token required' });
-  }
+  if (!token) return res.status(401).json({ error: 'Access token required' });
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) {
-      return res.status(403).json({ error: 'Invalid or expired token' });
-    }
-    req.user = user;
+    if (err) return res.status(403).json({ error: 'Invalid or expired token' });
+    req.user = user; // { username, isAdmin, permissions }
     next();
   });
 };
+
+const requireAdmin = (req, res, next) => {
+  if (!req.user?.isAdmin) {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  next();
+};
+
+/** Returns 403 if user lacks a given permission (admins always pass). */
+const requirePermission = (permKey) => (req, res, next) => {
+  if (req.user?.isAdmin) return next();
+  if (!req.user?.permissions?.[permKey]) {
+    return res.status(403).json({ error: `Permission denied: ${permKey}` });
+  }
+  next();
+};
+
+// ─── Auth endpoints ──────────────────────────────────────────────────────────
 
 // Login endpoint
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    console.log('Login attempt:', { username, passwordLength: password?.length });
-
     if (!username || !password) {
       return res.status(400).json({ error: 'Username and password required' });
     }
 
-    const hashedPassword = users[username];
-    
-    if (!hashedPassword) {
-      console.log('User not found:', username);
+    const { users } = readUsers();
+    const userRecord = users.find(u => u.username === username);
+
+    if (!userRecord) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    console.log('Comparing password for user:', username);
-    const validPassword = await bcrypt.compare(password, hashedPassword);
-    console.log('Password valid:', validPassword);
-    
+    const validPassword = await bcrypt.compare(password, userRecord.password);
     if (!validPassword) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: JWT_EXPIRY });
-    
-    res.json({ 
-      token, 
+    const payload = {
       username,
-      expiresIn: JWT_EXPIRY 
-    });
+      isAdmin    : !!userRecord.isAdmin,
+      permissions: userRecord.isAdmin ? defaultPermissions() : (userRecord.permissions ?? defaultPermissions()),
+    };
+
+    // Admins always have full permissions in the token
+    if (userRecord.isAdmin) {
+      payload.permissions = { directoryAccess: 'all', allowedDirectories: [], canUpload: true, canDelete: true, canMove: true };
+    }
+
+    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRY });
+
+    res.json({ token, username, isAdmin: payload.isAdmin, permissions: payload.permissions, expiresIn: JWT_EXPIRY });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Login failed' });
@@ -130,28 +197,121 @@ app.post('/api/auth/login', async (req, res) => {
 
 // Verify token endpoint
 app.get('/api/auth/verify', authenticateToken, (req, res) => {
-  res.json({ valid: true, username: req.user.username });
+  res.json({ valid: true, username: req.user.username, isAdmin: req.user.isAdmin, permissions: req.user.permissions });
 });
+
+// ─── Admin: User management ──────────────────────────────────────────────────
+
+// List all users
+app.get('/api/admin/users', authenticateToken, requireAdmin, (req, res) => {
+  const { users } = readUsers();
+  // Never send passwords to the client
+  const safe = users.map(({ password: _pw, ...rest }) => rest);
+  res.json({ users: safe });
+});
+
+// Create user
+app.post('/api/admin/users', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { username, password, isAdmin = false, permissions } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password required' });
+    }
+
+    const data = readUsers();
+    if (data.users.find(u => u.username === username)) {
+      return res.status(409).json({ error: 'Username already exists' });
+    }
+
+    const hashed = await bcrypt.hash(password, 10);
+    const newUser = {
+      username,
+      password   : hashed,
+      isAdmin    : !!isAdmin,
+      permissions: { ...defaultPermissions(), ...(permissions ?? {}) },
+    };
+
+    data.users.push(newUser);
+    saveUsers(data);
+
+    const { password: _pw, ...safe } = newUser;
+    res.status(201).json({ user: safe });
+  } catch (error) {
+    console.error('Create user error:', error);
+    res.status(500).json({ error: 'Failed to create user' });
+  }
+});
+
+// Update user permissions (and/or isAdmin flag)
+app.put('/api/admin/users/:username', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { username } = req.params;
+    const { isAdmin, permissions, password } = req.body;
+
+    const data = readUsers();
+    const idx = data.users.findIndex(u => u.username === username);
+    if (idx === -1) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Prevent removing your own admin rights
+    if (username === req.user.username && isAdmin === false) {
+      return res.status(400).json({ error: 'Cannot remove your own admin rights' });
+    }
+
+    if (isAdmin !== undefined) data.users[idx].isAdmin = !!isAdmin;
+    if (permissions !== undefined) {
+      data.users[idx].permissions = { ...defaultPermissions(), ...permissions };
+    }
+    if (password) {
+      data.users[idx].password = await bcrypt.hash(password, 10);
+    }
+
+    saveUsers(data);
+    const { password: _pw, ...safe } = data.users[idx];
+    res.json({ user: safe });
+  } catch (error) {
+    console.error('Update user error:', error);
+    res.status(500).json({ error: 'Failed to update user' });
+  }
+});
+
+// Delete user
+app.delete('/api/admin/users/:username', authenticateToken, requireAdmin, (req, res) => {
+  const { username } = req.params;
+  if (username === req.user.username) {
+    return res.status(400).json({ error: 'Cannot delete your own account' });
+  }
+
+  const data = readUsers();
+  const idx = data.users.findIndex(u => u.username === username);
+  if (idx === -1) return res.status(404).json({ error: 'User not found' });
+
+  data.users.splice(idx, 1);
+  saveUsers(data);
+  res.json({ success: true });
+});
+
+// ─── Folders & Videos ────────────────────────────────────────────────────────
 
 // Get all folders (including nested)
 app.get('/api/folders', authenticateToken, async (req, res) => {
   try {
     const getAllFolders = async (prefix = '') => {
       const command = new ListObjectsV2Command({
-        Bucket: BUCKET_NAME,
-        Prefix: prefix,
+        Bucket   : BUCKET_NAME,
+        Prefix   : prefix,
         Delimiter: '/',
       });
 
       const response = await s3Client.send(command);
-      const folders = [];
+      const folders  = [];
 
       if (response.CommonPrefixes) {
         for (const commonPrefix of response.CommonPrefixes) {
           const folderPath = commonPrefix.Prefix?.replace(/\/$/, '');
           if (folderPath && folderPath !== 'Uncategorized') {
             folders.push(folderPath);
-            // Recursively get subfolders
             const subfolders = await getAllFolders(commonPrefix.Prefix);
             folders.push(...subfolders);
           }
@@ -161,11 +321,15 @@ app.get('/api/folders', authenticateToken, async (req, res) => {
       return folders;
     };
 
-    const allFolders = await getAllFolders();
-    const folders = ['Uncategorized', 'Recycle Bin', ...allFolders.filter(f => f !== 'Recycle Bin')];
-    console.log('=== FOLDERS LIST ===');
-    console.log('All folders from S3:', allFolders);
-    console.log('Final folders to send:', folders);
+    let allFolders = await getAllFolders();
+    let folders    = ['Uncategorized', 'Recycle Bin', ...allFolders.filter(f => f !== 'Recycle Bin')];
+
+    // Filter by directory access permissions (non-admins with 'specific' access)
+    if (!req.user?.isAdmin && req.user?.permissions?.directoryAccess === 'specific') {
+      const allowed = req.user.permissions.allowedDirectories ?? [];
+      folders = folders.filter(f => f === 'Recycle Bin' || allowed.includes(f));
+    }
+
     res.json({ folders });
   } catch (error) {
     console.error('Error listing folders:', error);
@@ -219,7 +383,7 @@ app.get('/api/videos', authenticateToken, async (req, res) => {
 });
 
 // Upload video
-app.post('/api/upload', authenticateToken, upload.single('video'), async (req, res) => {
+app.post('/api/upload', authenticateToken, requirePermission('canUpload'), upload.single('video'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file provided' });
@@ -254,7 +418,7 @@ app.post('/api/upload', authenticateToken, upload.single('video'), async (req, r
 });
 
 // Delete video (move to Recycle Bin)
-app.delete('/api/videos/:key(*)', authenticateToken, async (req, res) => {
+app.delete('/api/videos/:key(*)', authenticateToken, requirePermission('canDelete'), async (req, res) => {
   try {
     const key = req.params.key;
     
@@ -370,7 +534,7 @@ app.put('/api/videos/:key(*)/rename', authenticateToken, async (req, res) => {
 });
 
 // Move video to different folder
-app.put('/api/videos/:key(*)/move', authenticateToken, async (req, res) => {
+app.put('/api/videos/:key(*)/move', authenticateToken, requirePermission('canMove'), async (req, res) => {
   try {
     const oldKey = decodeURIComponent(req.params.key);
     const { targetFolder } = req.body;

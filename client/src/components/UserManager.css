@@ -1,0 +1,612 @@
+/* ── Container ──────────────────────────────────────────────── */
+.um-container {
+  max-width    : 900px;
+  margin       : 0 auto;
+  padding      : 2rem 1.5rem;
+  font-family  : -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.um-header {
+  display        : flex;
+  justify-content: space-between;
+  align-items    : flex-start;
+  margin-bottom  : 1.5rem;
+  gap            : 1rem;
+  flex-wrap      : wrap;
+}
+
+.um-header h2 {
+  font-size    : 1.5rem;
+  font-weight  : 700;
+  color        : #1a1a2e;
+  margin-bottom: 0.25rem;
+}
+
+.um-subtitle {
+  color    : #64748b;
+  font-size: 0.875rem;
+}
+
+.um-loading {
+  text-align : center;
+  color      : #64748b;
+  padding    : 3rem;
+  font-size  : 1rem;
+}
+
+/* ── Banners ────────────────────────────────────────────────── */
+.um-banner {
+  display        : flex;
+  align-items    : center;
+  justify-content: space-between;
+  padding        : 0.75rem 1rem;
+  border-radius  : 8px;
+  margin-bottom  : 1rem;
+  font-size      : 0.875rem;
+  font-weight    : 500;
+}
+
+.um-banner--error {
+  background: #fee2e2;
+  color     : #dc2626;
+  border    : 1px solid #fca5a5;
+}
+
+.um-banner--success {
+  background: #dcfce7;
+  color     : #16a34a;
+  border    : 1px solid #86efac;
+}
+
+.um-banner button {
+  background: transparent;
+  border    : none;
+  cursor    : pointer;
+  font-size : 1rem;
+  color     : inherit;
+  padding   : 0 0.25rem;
+}
+
+/* ── Table ──────────────────────────────────────────────────── */
+.um-table-wrapper {
+  background   : #fff;
+  border-radius: 12px;
+  box-shadow   : 0 1px 4px rgba(0,0,0,0.08), 0 4px 20px rgba(0,0,0,0.06);
+  overflow     : auto;
+}
+
+.um-table {
+  width          : 100%;
+  border-collapse: collapse;
+  font-size      : 0.9rem;
+}
+
+.um-table thead tr {
+  background: #f8fafc;
+}
+
+.um-table th {
+  padding    : 0.875rem 1rem;
+  text-align : left;
+  font-weight: 600;
+  color      : #475569;
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.um-table td {
+  padding     : 0.875rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.um-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.um-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.um-row--admin {
+  background: #fafbff !important;
+}
+
+/* ── User cell ──────────────────────────────────────────────── */
+.um-user-cell {
+  display    : flex;
+  align-items: center;
+  gap        : 0.75rem;
+}
+
+.um-avatar {
+  width           : 36px;
+  height          : 36px;
+  border-radius   : 50%;
+  background      : linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color           : #fff;
+  display         : flex;
+  align-items     : center;
+  justify-content : center;
+  font-weight     : 700;
+  font-size       : 0.8rem;
+  flex-shrink     : 0;
+  text-transform  : uppercase;
+  letter-spacing  : 0.05em;
+}
+
+.um-username {
+  font-weight: 600;
+  color      : #1e293b;
+}
+
+.um-badge {
+  display      : inline-block;
+  margin-left  : 0.4rem;
+  padding      : 0.1rem 0.45rem;
+  background   : #ede9fe;
+  color        : #7c3aed;
+  border-radius: 999px;
+  font-size    : 0.7rem;
+  font-weight  : 600;
+  vertical-align: middle;
+}
+
+/* ── Directory cell ─────────────────────────────────────────── */
+.um-all-label {
+  color      : #94a3b8;
+  font-style : italic;
+  font-size  : 0.85rem;
+}
+
+.um-dir-cell {
+  position: relative;
+  display : flex;
+  gap     : 0.5rem;
+  align-items: center;
+}
+
+.um-dir-cell select {
+  padding      : 0.35rem 0.6rem;
+  border       : 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size    : 0.85rem;
+  background   : #fff;
+  cursor       : pointer;
+  color        : #334155;
+  outline      : none;
+  transition   : border-color 0.15s;
+}
+
+.um-dir-cell select:focus {
+  border-color: #667eea;
+}
+
+.um-btn-dirs {
+  padding      : 0.3rem 0.6rem;
+  font-size    : 0.75rem;
+  background   : #eff6ff;
+  border       : 1px solid #bfdbfe;
+  border-radius: 6px;
+  color        : #1d4ed8;
+  cursor       : pointer;
+  white-space  : nowrap;
+  transition   : background 0.15s;
+}
+
+.um-btn-dirs:hover {
+  background: #dbeafe;
+}
+
+.um-dir-popover {
+  position     : absolute;
+  top          : calc(100% + 6px);
+  left         : 0;
+  z-index      : 100;
+  background   : #fff;
+  border       : 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow   : 0 8px 24px rgba(0,0,0,0.12);
+  padding      : 0.75rem;
+  min-width    : 220px;
+  max-height   : 240px;
+  overflow-y   : auto;
+}
+
+.um-dir-popover-header {
+  display        : flex;
+  justify-content: space-between;
+  align-items    : center;
+  margin-bottom  : 0.5rem;
+  font-size      : 0.8rem;
+  font-weight    : 600;
+  color          : #475569;
+}
+
+.um-dir-popover-header button {
+  background: transparent;
+  border    : none;
+  cursor    : pointer;
+  color     : #94a3b8;
+  font-size : 0.9rem;
+  padding   : 0;
+  line-height: 1;
+}
+
+.um-dir-checkbox {
+  display    : flex;
+  align-items: center;
+  gap        : 0.5rem;
+  padding    : 0.3rem 0.25rem;
+  font-size  : 0.85rem;
+  color      : #334155;
+  cursor     : pointer;
+  border-radius: 4px;
+  transition : background 0.1s;
+}
+
+.um-dir-checkbox:hover {
+  background: #f8fafc;
+}
+
+.um-dir-checkbox input {
+  cursor: pointer;
+}
+
+.um-no-folders {
+  color    : #94a3b8;
+  font-size: 0.8rem;
+  text-align: center;
+  padding  : 0.5rem;
+}
+
+/* ── Toggle switch ──────────────────────────────────────────── */
+.um-toggle-cell {
+  text-align: center;
+}
+
+.um-toggle {
+  position     : relative;
+  display      : inline-flex;
+  align-items  : center;
+  width        : 44px;
+  height       : 24px;
+  border-radius: 999px;
+  background   : #cbd5e1;
+  border       : none;
+  cursor       : pointer;
+  transition   : background 0.2s;
+  padding      : 0;
+  outline      : none;
+}
+
+.um-toggle:focus-visible {
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.4);
+}
+
+.um-toggle--on {
+  background: #22c55e;
+}
+
+.um-toggle--disabled {
+  cursor : default;
+  opacity: 0.85;
+}
+
+.um-toggle--on.um-toggle--disabled {
+  background: #86efac;
+}
+
+.um-toggle-thumb {
+  position     : absolute;
+  left         : 3px;
+  width        : 18px;
+  height       : 18px;
+  border-radius: 50%;
+  background   : #fff;
+  box-shadow   : 0 1px 3px rgba(0,0,0,0.2);
+  transition   : left 0.2s;
+}
+
+.um-toggle--on .um-toggle-thumb {
+  left: 23px;
+}
+
+/* ── Password field with show/hide toggle ───────────────────── */
+.um-password-wrapper {
+  position: relative;
+  display : flex;
+}
+
+.um-password-wrapper input {
+  flex         : 1;
+  padding-right: 2.5rem !important;
+}
+
+.um-password-toggle {
+  position   : absolute;
+  right      : 0.5rem;
+  top        : 50%;
+  transform  : translateY(-50%);
+  background : transparent;
+  border     : none;
+  cursor     : pointer;
+  font-size  : 1rem;
+  line-height: 1;
+  padding    : 0.2rem;
+  opacity    : 0.6;
+  transition : opacity 0.15s;
+}
+
+.um-password-toggle:hover {
+  opacity: 1;
+}
+
+/* ── Change-password modal (narrower) ───────────────────────── */
+.um-modal--sm {
+  max-width: 380px;
+}
+
+.um-change-pw-user {
+  font-size: 0.875rem;
+  color    : #64748b;
+}
+
+/* ── Actions cell (key + delete side by side) ───────────────── */
+.um-actions-cell {
+  display    : flex;
+  align-items: center;
+  gap        : 0.25rem;
+}
+
+.um-btn-icon {
+  background   : transparent;
+  border       : none;
+  cursor       : pointer;
+  font-size    : 1rem;
+  opacity      : 0.4;
+  transition   : opacity 0.15s, background 0.15s;
+  padding      : 0.25rem 0.4rem;
+  border-radius: 6px;
+  line-height  : 1;
+}
+
+.um-btn-icon:hover {
+  opacity   : 1;
+  background: #eff6ff;
+}
+
+/* ── Delete button ──────────────────────────────────────────── */
+.um-btn-delete {
+  background: transparent;
+  border    : none;
+  cursor    : pointer;
+  font-size : 1.1rem;
+  opacity   : 0.4;
+  transition: opacity 0.15s;
+  padding   : 0.25rem 0.5rem;
+  border-radius: 6px;
+}
+
+.um-btn-delete:hover {
+  opacity   : 1;
+  background: #fee2e2;
+}
+
+.um-delete-confirm {
+  display    : flex;
+  align-items: center;
+  gap        : 0.4rem;
+  font-size  : 0.8rem;
+  color      : #dc2626;
+  white-space: nowrap;
+}
+
+/* ── Footer ─────────────────────────────────────────────────── */
+.um-footer {
+  display        : flex;
+  justify-content: center;
+  margin-top     : 1.5rem;
+}
+
+/* ── Buttons ────────────────────────────────────────────────── */
+.um-btn {
+  padding      : 0.55rem 1.25rem;
+  border-radius: 8px;
+  font-size    : 0.9rem;
+  font-weight  : 600;
+  cursor       : pointer;
+  border       : none;
+  transition   : opacity 0.15s, background 0.15s;
+  line-height  : 1.4;
+}
+
+.um-btn:disabled {
+  opacity: 0.6;
+  cursor : not-allowed;
+}
+
+.um-btn--primary {
+  background: #667eea;
+  color     : #fff;
+}
+
+.um-btn--primary:hover:not(:disabled) {
+  background: #5a6fd6;
+}
+
+.um-btn--secondary {
+  background: #f1f5f9;
+  color     : #475569;
+  border    : 1px solid #e2e8f0;
+}
+
+.um-btn--secondary:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+
+.um-btn--save {
+  padding   : 0.7rem 2.5rem;
+  background: #2563eb;
+  color     : #fff;
+  font-size : 1rem;
+  border-radius: 10px;
+}
+
+.um-btn--save:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.um-btn--danger-sm {
+  padding      : 0.2rem 0.6rem;
+  background   : #dc2626;
+  color        : #fff;
+  font-size    : 0.78rem;
+  font-weight  : 600;
+  border-radius: 5px;
+  cursor       : pointer;
+  border       : none;
+}
+
+.um-btn--ghost-sm {
+  padding      : 0.2rem 0.6rem;
+  background   : transparent;
+  color        : #64748b;
+  font-size    : 0.78rem;
+  font-weight  : 600;
+  border-radius: 5px;
+  cursor       : pointer;
+  border       : 1px solid #e2e8f0;
+}
+
+/* ── Create modal ───────────────────────────────────────────── */
+.um-modal-overlay {
+  position       : fixed;
+  inset          : 0;
+  background     : rgba(0,0,0,0.45);
+  z-index        : 1000;
+  display        : flex;
+  align-items    : center;
+  justify-content: center;
+  padding        : 1rem;
+}
+
+.um-modal {
+  background   : #fff;
+  border-radius: 14px;
+  box-shadow   : 0 20px 60px rgba(0,0,0,0.2);
+  width        : 100%;
+  max-width    : 480px;
+  max-height   : 90vh;
+  overflow-y   : auto;
+}
+
+.um-modal-header {
+  display        : flex;
+  justify-content: space-between;
+  align-items    : center;
+  padding        : 1.25rem 1.5rem 0;
+}
+
+.um-modal-header h3 {
+  font-size  : 1.15rem;
+  font-weight: 700;
+  color      : #1e293b;
+}
+
+.um-modal-close {
+  background: transparent;
+  border    : none;
+  font-size : 1.1rem;
+  cursor    : pointer;
+  color     : #94a3b8;
+  padding   : 0.25rem;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.um-modal-close:hover {
+  color     : #334155;
+  background: #f1f5f9;
+}
+
+.um-modal-body {
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap    : 0.85rem;
+}
+
+.um-field {
+  display       : flex;
+  flex-direction: column;
+  gap           : 0.35rem;
+}
+
+.um-field label {
+  font-size  : 0.85rem;
+  font-weight: 600;
+  color      : #475569;
+}
+
+.um-field input[type="text"],
+.um-field input[type="password"],
+.um-field select {
+  padding      : 0.5rem 0.75rem;
+  border       : 1px solid #cbd5e1;
+  border-radius: 7px;
+  font-size    : 0.9rem;
+  outline      : none;
+  transition   : border-color 0.15s;
+  color        : #1e293b;
+  background   : #fff;
+}
+
+.um-field input:focus,
+.um-field select:focus {
+  border-color: #667eea;
+  box-shadow  : 0 0 0 3px rgba(102,126,234,0.15);
+}
+
+.um-field--row {
+  flex-direction : row;
+  align-items    : center;
+  justify-content: space-between;
+}
+
+.um-divider {
+  border    : none;
+  border-top: 1px solid #f1f5f9;
+  margin    : 0.25rem 0;
+}
+
+.um-section-title {
+  font-size  : 0.8rem;
+  font-weight: 700;
+  color      : #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.um-dir-list {
+  display       : flex;
+  flex-direction: column;
+  gap           : 0.35rem;
+  padding-left  : 0.5rem;
+}
+
+.um-error {
+  padding      : 0.6rem 0.75rem;
+  background   : #fee2e2;
+  color        : #dc2626;
+  border-radius: 7px;
+  font-size    : 0.85rem;
+  font-weight  : 500;
+}
+
+.um-modal-footer {
+  display        : flex;
+  justify-content: flex-end;
+  gap            : 0.75rem;
+  padding-top    : 0.5rem;
+}

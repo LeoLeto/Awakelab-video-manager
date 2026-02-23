@@ -1,0 +1,16 @@
+{
+  "users": [
+    {
+      "username": "superadmin",
+      "password": "$2b$10$svAG6m/YX1x/SqtF6KWZDOvRg9UxblzaRfTPmvjBttduk.0vB6ta.",
+      "isAdmin": true,
+      "permissions": {
+        "directoryAccess": "all",
+        "allowedDirectories": [],
+        "canUpload": true,
+        "canDelete": true,
+        "canMove": true
+      }
+    }
+  ]
+}

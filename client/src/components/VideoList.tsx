@@ -2,14 +2,16 @@ import type { VideoFile } from '../services/apiService';
 import { VideoItem } from './VideoItem';
 
 interface VideoListProps {
-  videos: VideoFile[];
-  onDelete: (key: string) => void;
-  onRename: () => void;
-  loading: boolean;
-  folders: string[];
+  videos   : VideoFile[];
+  onDelete : (key: string) => void;
+  onRename : () => void;
+  loading  : boolean;
+  folders  : string[];
+  canDelete?: boolean;
+  canMove  ?: boolean;
 }
 
-export const VideoList = ({ videos, onDelete, onRename, loading, folders }: VideoListProps) => {
+export const VideoList = ({ videos, onDelete, onRename, loading, folders, canDelete = true, canMove = true }: VideoListProps) => {
   if (loading) {
     return (
       <div className="video-list">
@@ -39,6 +41,8 @@ export const VideoList = ({ videos, onDelete, onRename, loading, folders }: Vide
             onDelete={onDelete} 
             onRename={onRename}
             folders={folders}
+            canDelete={canDelete}
+            canMove={canMove}
           />
         ))}
       </div>

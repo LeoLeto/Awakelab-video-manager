@@ -221,3 +221,76 @@ export const deleteFolder = async (folderName: string): Promise<void> => {
     throw error;
   }
 };
+
+// ─── Admin: User management ──────────────────────────────────────────────────
+
+export interface UserPermissions {
+  directoryAccess    : 'all' | 'specific';
+  allowedDirectories : string[];
+  canUpload          : boolean;
+  canDelete          : boolean;
+  canMove            : boolean;
+}
+
+export interface AdminUser {
+  username   : string;
+  isAdmin    : boolean;
+  permissions: UserPermissions;
+}
+
+export const adminGetUsers = async (): Promise<AdminUser[]> => {
+  const response = await fetch(`${API_BASE_URL}/admin/users`, {
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) throw new Error('Failed to fetch users');
+  const data = await response.json();
+  return data.users;
+};
+
+export const adminCreateUser = async (
+  username: string,
+  password: string,
+  isAdmin: boolean,
+  permissions: UserPermissions,
+): Promise<AdminUser> => {
+  const response = await fetch(`${API_BASE_URL}/admin/users`, {
+    method : 'POST',
+    headers: getAuthHeaders(),
+    body   : JSON.stringify({ username, password, isAdmin, permissions }),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ error: 'Failed to create user' }));
+    throw new Error(err.error || 'Failed to create user');
+  }
+  const data = await response.json();
+  return data.user;
+};
+
+export const adminUpdateUser = async (
+  username: string,
+  updates: { isAdmin?: boolean; permissions?: Partial<UserPermissions>; password?: string },
+): Promise<AdminUser> => {
+  const response = await fetch(`${API_BASE_URL}/admin/users/${encodeURIComponent(username)}`, {
+    method : 'PUT',
+    headers: getAuthHeaders(),
+    body   : JSON.stringify(updates),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ error: 'Failed to update user' }));
+    throw new Error(err.error || 'Failed to update user');
+  }
+  const data = await response.json();
+  return data.user;
+};
+
+export const adminDeleteUser = async (username: string): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/admin/users/${encodeURIComponent(username)}`, {
+    method : 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ error: 'Failed to delete user' }));
+    throw new Error(err.error || 'Failed to delete user');
+  }
+};
+

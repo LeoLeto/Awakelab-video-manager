@@ -3,13 +3,15 @@ import { renameVideo, moveVideo, restoreVideo } from '../services/apiService';
 import type { VideoFile } from '../services/apiService';
 
 interface VideoItemProps {
-  video: VideoFile;
-  onDelete: (key: string) => void;
-  onRename: () => void;
-  folders: string[];
+  video    : VideoFile;
+  onDelete : (key: string) => void;
+  onRename : () => void;
+  folders  : string[];
+  canDelete?: boolean;
+  canMove  ?: boolean;
 }
 
-export const VideoItem = ({ video, onDelete, onRename, folders }: VideoItemProps) => {
+export const VideoItem = ({ video, onDelete, onRename, folders, canDelete = true, canMove = true }: VideoItemProps) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
@@ -251,13 +253,15 @@ export const VideoItem = ({ video, onDelete, onRename, folders }: VideoItemProps
                 >
                   {restoring ? '⏳ Restoring...' : '♻️ Restore'}
                 </button>
-                <button
-                  className="delete-btn"
-                  onClick={() => setShowDeleteConfirm(true)}
-                  title="Permanently delete video"
-                >
-                  🗑️ Delete Forever
-                </button>
+                {canDelete && (
+                  <button
+                    className="delete-btn"
+                    onClick={() => setShowDeleteConfirm(true)}
+                    title="Permanently delete video"
+                  >
+                    🗑️ Delete Forever
+                  </button>
+                )}
               </>
             ) : (
               // Normal actions
@@ -276,20 +280,24 @@ export const VideoItem = ({ video, onDelete, onRename, folders }: VideoItemProps
                 >
                   ✏️ Rename
                 </button>
-                <button
-                  className="move-btn"
-                  onClick={handleStartMove}
-                  title="Move to another folder"
-                >
-                  📁 Move
-                </button>
-                <button
-                  className="delete-btn"
-                  onClick={() => setShowDeleteConfirm(true)}
-                  title="Delete video"
-                >
-                  🗑️ Delete
-                </button>
+                {canMove && (
+                  <button
+                    className="move-btn"
+                    onClick={handleStartMove}
+                    title="Move to another folder"
+                  >
+                    📁 Move
+                  </button>
+                )}
+                {canDelete && (
+                  <button
+                    className="delete-btn"
+                    onClick={() => setShowDeleteConfirm(true)}
+                    title="Delete video"
+                  >
+                    🗑️ Delete
+                  </button>
+                )}
               </>
             )}
           </>
