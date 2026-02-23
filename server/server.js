@@ -356,6 +356,10 @@ app.get('/api/videos', authenticateToken, async (req, res) => {
     const response = await s3Client.send(command);
     const videos = [];
 
+    // Determine if this user's view should be filtered
+    const isRestricted = !req.user?.isAdmin && req.user?.permissions?.directoryAccess === 'specific';
+    const allowedDirs  = isRestricted ? (req.user.permissions.allowedDirectories || []) : null;
+
     if (response.Contents) {
       for (const item of response.Contents) {
         // Skip items that are folders (end with /)
@@ -367,6 +371,19 @@ app.get('/api/videos', authenticateToken, async (req, res) => {
           
           // Get full folder path (everything except the filename)
           const folderName = keyParts.length > 1 ? keyParts.slice(0, -1).join('/') : 'Uncategorized';
+
+          // For restricted users in Recycle Bin: only show items that
+          // originally came from one of their allowed directories.
+          // Key format: "Recycle Bin/TIMESTAMP_ENCODEDPATH_filename"
+          if (isRestricted && folderName === 'Recycle Bin') {
+            const withoutPrefix    = item.Key.replace('Recycle Bin/', '');
+            const withoutTimestamp = withoutPrefix.replace(/^\d+_/, ''); // strip "TIMESTAMP_"
+            const fromAllowed = allowedDirs.some(dir => {
+              const encodedDir = dir.replace(/\//g, '_');
+              return withoutTimestamp.startsWith(encodedDir + '_');
+            });
+            if (!fromAllowed) continue;
+          }
 
           videos.push({
             key: item.Key,

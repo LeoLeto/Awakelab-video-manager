@@ -76,6 +76,7 @@ function VideoManagerContent() {
 
   useEffect(() => {
     if (isAuthenticated) {
+      setView('videos'); // reset on every new login
       loadFolders();
     }
   }, [isAuthenticated]);
@@ -192,6 +193,8 @@ function VideoManagerContent() {
     return <Login />;
   }
 
+  const effectiveView = isAdmin ? view : 'videos';
+
   return (
     <div className="app">
       <header className="app-header">
@@ -204,9 +207,9 @@ function VideoManagerContent() {
             {isAdmin && (
               <button
                 onClick={() => setView(v => v === 'admin' ? 'videos' : 'admin')}
-                className={`admin-nav-button ${view === 'admin' ? 'admin-nav-button--active' : ''}`}
+                className={`admin-nav-button ${effectiveView === 'admin' ? 'admin-nav-button--active' : ''}`}
               >
-                {view === 'admin' ? '🎥 Videos' : '⚙️ Usuarios'}
+                {effectiveView === 'admin' ? '🎥 Videos' : '⚙️ Usuarios'}
               </button>
             )}
             <span className="username">👤 {username}{isAdmin && ' (Admin)'}</span>
@@ -216,7 +219,7 @@ function VideoManagerContent() {
         <span className="app-version">v{APP_VERSION}</span>
       </header>
 
-      {view === 'admin' ? (
+      {effectiveView === 'admin' ? (
         <div className="admin-area">
           <UserManager folders={folders} />
         </div>

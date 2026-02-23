@@ -549,31 +549,36 @@ export const UserManager = ({ folders }: Props) => {
                   {/* Actions */}
                   <td>
                     <div className="um-actions-cell">
-                      {(isSelf || !isAdminRow) && (
+                      <button
+                        className="um-btn-icon"
+                        title="Cambiar contraseña"
+                        style={{ visibility: (isSelf || !isAdminRow) ? 'visible' : 'hidden' }}
+                        onClick={() => setChangingPasswordFor(u.username)}
+                      >
+                        🔑
+                      </button>
+                      {isSelf ? (
                         <button
-                          className="um-btn-icon"
-                          title="Cambiar contraseña"
-                          onClick={() => setChangingPasswordFor(u.username)}
+                          className="um-btn-delete"
+                          style={{ visibility: 'hidden' }}
+                          aria-hidden="true"
                         >
-                          🔑
+                          🗑
                         </button>
-                      )}
-                      {!isSelf && (
-                        deletingUser === u.username ? (
-                          <div className="um-delete-confirm">
-                            <span>¿Eliminar?</span>
-                            <button className="um-btn um-btn--danger-sm" onClick={() => handleDelete(u.username)}>Sí</button>
-                            <button className="um-btn um-btn--ghost-sm" onClick={() => setDeletingUser(null)}>No</button>
-                          </div>
-                        ) : (
-                          <button
-                            className="um-btn-delete"
-                            title="Eliminar usuario"
-                            onClick={() => setDeletingUser(u.username)}
-                          >
-                            🗑
-                          </button>
-                        )
+                      ) : deletingUser === u.username ? (
+                        <div className="um-delete-confirm">
+                          <span>¿Eliminar?</span>
+                          <button className="um-btn um-btn--danger-sm" onClick={() => handleDelete(u.username)}>Sí</button>
+                          <button className="um-btn um-btn--ghost-sm" onClick={() => setDeletingUser(null)}>No</button>
+                        </div>
+                      ) : (
+                        <button
+                          className="um-btn-delete"
+                          title="Eliminar usuario"
+                          onClick={() => setDeletingUser(u.username)}
+                        >
+                          🗑
+                        </button>
                       )}
                     </div>
                   </td>
