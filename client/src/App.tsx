@@ -10,7 +10,7 @@ import { listVideosFromS3, deleteVideoFromS3, getAllFolders, createFolder, delet
 import type { VideoFile } from './services/apiService';
 import './App.css';
 
-const APP_VERSION = '2.5';
+const APP_VERSION = '2.6';
 
 // ─── Self-service password change modal ──────────────────────────────────────
 function SelfChangePasswordModal({ username, onClose }: { username: string; onClose: () => void }) {
@@ -349,6 +349,7 @@ function VideoManagerContent() {
               folders={folders}
               canDelete={isAdmin || permissions.canDelete}
               canMove={isAdmin || permissions.canMove}
+              canUpload={isAdmin || permissions.canUpload}
             />
           </main>
         </div>

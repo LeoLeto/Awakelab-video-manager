@@ -105,6 +105,58 @@ export const uploadVideoToS3 = async (
   }
 };
 
+export const replaceVideo = async (
+  key: string,
+  file: File,
+  onProgress?: (progress: number) => void
+): Promise<void> => {
+  try {
+    const formData = new FormData();
+    formData.append('video', file);
+
+    const xhr = new XMLHttpRequest();
+    const token = getAuthToken();
+
+    return new Promise((resolve, reject) => {
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable && onProgress) {
+          const progress = (e.loaded / e.total) * 100;
+          onProgress(progress);
+        }
+      });
+
+      xhr.addEventListener('load', () => {
+        if (xhr.status === 401 && _onUnauthorized) {
+          _onUnauthorized();
+          reject(new Error('Unauthorized'));
+        } else if (xhr.status === 200) {
+          resolve();
+        } else {
+          try {
+            const response = JSON.parse(xhr.responseText);
+            reject(new Error(response.error || 'Replace failed'));
+          } catch {
+            reject(new Error('Replace failed'));
+          }
+        }
+      });
+
+      xhr.addEventListener('error', () => {
+        reject(new Error('Replace failed'));
+      });
+
+      xhr.open('POST', `${API_BASE_URL}/videos/${encodeURIComponent(key)}/replace`);
+      if (token) {
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      }
+      xhr.send(formData);
+    });
+  } catch (error) {
+    console.error('Error replacing video:', error);
+    throw error;
+  }
+};
+
 export const deleteVideoFromS3 = async (key: string): Promise<void> => {
   try {
     const response = await authFetch(`${API_BASE_URL}/videos/${encodeURIComponent(key)}`, {

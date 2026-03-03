@@ -1,17 +1,18 @@
-import { useState } from 'react';
-import { renameVideo, moveVideo, restoreVideo } from '../services/apiService';
+import { useState, useRef } from 'react';
+import { renameVideo, moveVideo, restoreVideo, replaceVideo } from '../services/apiService';
 import type { VideoFile } from '../services/apiService';
 
 interface VideoItemProps {
-  video    : VideoFile;
-  onDelete : (key: string) => void;
-  onRename : () => void;
-  folders  : string[];
-  canDelete?: boolean;
-  canMove  ?: boolean;
+  video     : VideoFile;
+  onDelete  : (key: string) => void;
+  onRename  : () => void;
+  folders   : string[];
+  canDelete ?: boolean;
+  canMove   ?: boolean;
+  canUpload ?: boolean;
 }
 
-export const VideoItem = ({ video, onDelete, onRename, folders, canDelete = true, canMove = true }: VideoItemProps) => {
+export const VideoItem = ({ video, onDelete, onRename, folders, canDelete = true, canMove = true, canUpload = true }: VideoItemProps) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
@@ -22,6 +23,9 @@ export const VideoItem = ({ video, onDelete, onRename, folders, canDelete = true
   const [moving, setMoving] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [replacing, setReplacing] = useState(false);
+  const [replaceProgress, setReplaceProgress] = useState(0);
+  const replaceFileInputRef = useRef<HTMLInputElement>(null);
 
   const isInRecycleBin = video.key.startsWith('Recycle Bin/');
 
@@ -136,6 +140,31 @@ export const VideoItem = ({ video, onDelete, onRename, folders, canDelete = true
     }
   };
 
+  const handleReplaceClick = () => {
+    replaceFileInputRef.current?.click();
+  };
+
+  const handleReplaceFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setReplacing(true);
+    setReplaceProgress(0);
+    try {
+      await replaceVideo(video.key, file, (progress) => {
+        setReplaceProgress(Math.round(progress));
+      });
+      onRename(); // Refresh the list so size/date metadata update
+    } catch (error: any) {
+      alert(error.message || 'Error al reemplazar el archivo');
+    } finally {
+      setReplacing(false);
+      setReplaceProgress(0);
+      // Reset the input so the same file can be selected again if needed
+      if (replaceFileInputRef.current) replaceFileInputRef.current.value = '';
+    }
+  };
+
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -146,6 +175,24 @@ export const VideoItem = ({ video, onDelete, onRename, folders, canDelete = true
 
   return (
     <div className="video-item">
+      {/* Hidden file input for replace */}
+      <input
+        ref={replaceFileInputRef}
+        type="file"
+        style={{ display: 'none' }}
+        onChange={handleReplaceFileSelect}
+        disabled={replacing}
+      />
+
+      {replacing && (
+        <div className="replace-progress-overlay">
+          <div className="replace-progress-bar">
+            <div className="replace-progress-fill" style={{ width: `${replaceProgress}%` }}></div>
+          </div>
+          <span className="replace-progress-label">Reemplazando... {replaceProgress}%</span>
+        </div>
+      )}
+
       <div className="video-preview">
         {isVideoFile(video.name) ? (
           <video controls preload="metadata">
@@ -280,6 +327,16 @@ export const VideoItem = ({ video, onDelete, onRename, folders, canDelete = true
                 >
                   ✏️ Renombrar
                 </button>
+                {canUpload && (
+                  <button
+                    className="replace-btn"
+                    onClick={handleReplaceClick}
+                    disabled={replacing}
+                    title="Reemplazar archivo (preserva la URL)"
+                  >
+                    🔄 Reemplazar
+                  </button>
+                )}
                 {canMove && (
                   <button
                     className="move-btn"

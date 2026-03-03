@@ -15,6 +15,7 @@ import {
   CopyObjectCommand,
   HeadObjectCommand
 } from '@aws-sdk/client-s3';
+import { CloudFrontClient, CreateInvalidationCommand } from '@aws-sdk/client-cloudfront';
 
 dotenv.config();
 
@@ -49,6 +50,18 @@ const s3Client = new S3Client({
 
 const BUCKET_NAME = process.env.AWS_S3_BUCKET;
 const CLOUDFRONT_DOMAIN = process.env.CLOUDFRONT_DOMAIN || `${BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com`;
+const CLOUDFRONT_DISTRIBUTION_ID = process.env.CLOUDFRONT_DISTRIBUTION_ID || null;
+
+// CloudFront client — only initialized when a distribution ID is configured
+const cloudFrontClient = CLOUDFRONT_DISTRIBUTION_ID
+  ? new CloudFrontClient({
+      region: 'us-east-1', // CloudFront API is always us-east-1
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      },
+    })
+  : null;
 
 // Authentication configuration
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
@@ -472,6 +485,57 @@ app.post('/api/upload', authenticateToken, requirePermission('canUpload'), uploa
   } catch (error) {
     console.error('Error uploading video:', error);
     res.status(500).json({ error: 'Failed to upload video' });
+  }
+});
+
+// Replace video — overwrite an existing S3 object at the same key, preserving its URL
+app.post('/api/videos/:key(*)/replace', authenticateToken, requirePermission('canUpload'), upload.single('video'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file provided' });
+    }
+
+    const key = req.params.key;
+
+    const command = new PutObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: key,
+      Body: req.file.buffer,
+      ContentType: req.file.mimetype,
+    });
+
+    await s3Client.send(command);
+
+    // Optionally invalidate the CloudFront cache so the new version is served immediately
+    let cacheInvalidated = false;
+    if (cloudFrontClient && CLOUDFRONT_DISTRIBUTION_ID) {
+      try {
+        const invalidateCommand = new CreateInvalidationCommand({
+          DistributionId: CLOUDFRONT_DISTRIBUTION_ID,
+          InvalidationBatch: {
+            CallerReference: `replace-${Date.now()}`,
+            Paths: {
+              Quantity: 1,
+              Items: [`/${key}`],
+            },
+          },
+        });
+        await cloudFrontClient.send(invalidateCommand);
+        cacheInvalidated = true;
+      } catch (cfError) {
+        console.warn('CloudFront invalidation failed (non-fatal):', cfError.message);
+      }
+    }
+
+    res.json({
+      success: true,
+      key,
+      url: `https://${CLOUDFRONT_DOMAIN}/${encodeURIComponent(key).replace(/%2F/g, '/')}`,
+      cacheInvalidated,
+    });
+  } catch (error) {
+    console.error('Error replacing video:', error);
+    res.status(500).json({ error: 'Failed to replace video' });
   }
 });
 
