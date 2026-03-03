@@ -37,6 +37,114 @@
         "canDelete": false,
         "canMove": false
       }
+    },
+    {
+      "username": "ana quintana",
+      "password": "$2b$10$KDSnPmXypfm.Dde/vWuqdubziuBHRXps2okK6SzpNxdX0PEJhMi0K",
+      "isAdmin": false,
+      "permissions": {
+        "directoryAccess": "all",
+        "allowedDirectories": [],
+        "canUpload": true,
+        "canDelete": true,
+        "canMove": true
+      }
+    },
+    {
+      "username": "marta lopez",
+      "password": "$2b$10$lmNbK42IvKHnR0SrYnz06uGmXe/bseG2oSEXDYss/2G3TyujvYbsu",
+      "isAdmin": true,
+      "permissions": {
+        "directoryAccess": "all",
+        "allowedDirectories": [],
+        "canUpload": false,
+        "canDelete": false,
+        "canMove": false
+      }
+    },
+    {
+      "username": "rodri",
+      "password": "$2b$10$TCh9oV4UaYOLxTidaWfJ7.aDbTrcheaW96EcBSps6BFs.24SmlF6.",
+      "isAdmin": true,
+      "permissions": {
+        "directoryAccess": "all",
+        "allowedDirectories": [],
+        "canUpload": false,
+        "canDelete": false,
+        "canMove": false
+      }
+    },
+    {
+      "username": "sara vigil",
+      "password": "$2b$10$e5Ork5saRh2zEi/XnXK1NuCA69hCZvb4GmoG..y4HxNV6dzRVHAHK",
+      "isAdmin": false,
+      "permissions": {
+        "directoryAccess": "all",
+        "allowedDirectories": [],
+        "canUpload": true,
+        "canDelete": true,
+        "canMove": true
+      }
+    },
+    {
+      "username": "lara gete",
+      "password": "$2b$10$hta/8U36dknNTYQrtgf69Osw84CjfZouuDckAPQGpG1tCnzjMnaY6",
+      "isAdmin": false,
+      "permissions": {
+        "directoryAccess": "all",
+        "allowedDirectories": [],
+        "canUpload": true,
+        "canDelete": true,
+        "canMove": true
+      }
+    },
+    {
+      "username": "francisco farias",
+      "password": "$2b$10$GzwMLFrW2WNyxYVMMKUoa.IricjU4Hw3qPwK1xfEhK9gvjagJtYnq",
+      "isAdmin": false,
+      "permissions": {
+        "directoryAccess": "all",
+        "allowedDirectories": [],
+        "canUpload": true,
+        "canDelete": true,
+        "canMove": true
+      }
+    },
+    {
+      "username": "marta vizcaino",
+      "password": "$2b$10$LB5VkJdTv5FPN/rA5.UQhulBWg14SNkmn5Y2X3p7jBmRiLw0R7qC.",
+      "isAdmin": false,
+      "permissions": {
+        "directoryAccess": "all",
+        "allowedDirectories": [],
+        "canUpload": true,
+        "canDelete": true,
+        "canMove": true
+      }
+    },
+    {
+      "username": "jeremias",
+      "password": "$2b$10$FKwhlI2uZN53vXWBk0SbjeWnso3t4Eb0d4SOAf06oJ5iXfLVdVPyS",
+      "isAdmin": false,
+      "permissions": {
+        "directoryAccess": "all",
+        "allowedDirectories": [],
+        "canUpload": true,
+        "canDelete": true,
+        "canMove": true
+      }
+    },
+    {
+      "username": "mariela",
+      "password": "$2b$10$sH9wIBCnBMCwfTgi5t65gORctZDLhVepBn17ZSd1KL0JXC3CSjn2a",
+      "isAdmin": false,
+      "permissions": {
+        "directoryAccess": "all",
+        "allowedDirectories": [],
+        "canUpload": true,
+        "canDelete": true,
+        "canMove": true
+      }
     }
   ]
 }
