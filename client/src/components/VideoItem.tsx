@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { renameVideo, moveVideo, restoreVideo, replaceVideo } from '../services/apiService';
 import type { VideoFile } from '../services/apiService';
 
@@ -25,6 +26,7 @@ export const VideoItem = ({ video, onDelete, onRename, folders, canDelete = true
   const [deleting, setDeleting] = useState(false);
   const [replacing, setReplacing] = useState(false);
   const [replaceProgress, setReplaceProgress] = useState(0);
+  const [showReplaceSuccess, setShowReplaceSuccess] = useState(false);
   const replaceFileInputRef = useRef<HTMLInputElement>(null);
 
   const isInRecycleBin = video.key.startsWith('Recycle Bin/');
@@ -152,9 +154,12 @@ export const VideoItem = ({ video, onDelete, onRename, folders, canDelete = true
     setReplaceProgress(0);
     try {
       await replaceVideo(video.key, file, (progress) => {
-        setReplaceProgress(Math.round(progress));
+        // Scale XHR transfer progress to 0-90%; the remaining 10% represents
+        // the server-side S3 upload that happens after the browser finishes sending.
+        setReplaceProgress(Math.round(progress * 0.9));
       });
-      onRename(); // Refresh the list so size/date metadata update
+      setReplaceProgress(100);
+      setShowReplaceSuccess(true);
     } catch (error: any) {
       alert(error.message || 'Error al reemplazar el archivo');
     } finally {
@@ -173,8 +178,29 @@ export const VideoItem = ({ video, onDelete, onRename, folders, canDelete = true
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
   };
 
+  const replaceSuccessModal = showReplaceSuccess && createPortal(
+    <div className="replace-success-overlay" onClick={() => { setShowReplaceSuccess(false); onRename(); }}>
+      <div className="replace-success-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="replace-success-icon">✅</div>
+        <h4>Archivo reemplazado</h4>
+        <p>
+          El archivo fue subido correctamente y la URL se mantiene igual.
+        </p>
+        <p className="replace-success-note">
+          ⏱️ El caché de CDN puede tardar hasta <strong>5 minutos</strong> en actualizarse. Durante ese tiempo algunos usuarios podrían ver la versión anterior.
+        </p>
+        <button className="replace-success-close" onClick={() => { setShowReplaceSuccess(false); onRename(); }}>
+          Entendido
+        </button>
+      </div>
+    </div>,
+    document.body
+  );
+
   return (
     <div className="video-item">
+      {replaceSuccessModal}
+
       {/* Hidden file input for replace */}
       <input
         ref={replaceFileInputRef}
