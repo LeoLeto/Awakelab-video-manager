@@ -497,6 +497,17 @@ app.post('/api/videos/:key(*)/replace', authenticateToken, requirePermission('ca
 
     const key = req.params.key;
 
+    // Validate that the replacement file has the same extension as the existing key
+    const getExt = (name) => name.slice(name.lastIndexOf('.')).toLowerCase();
+    const existingExt = getExt(key);
+    const uploadedFilename = Buffer.from(req.file.originalname, 'latin1').toString('utf8');
+    const newExt = getExt(uploadedFilename);
+    if (existingExt !== newExt) {
+      return res.status(400).json({
+        error: `El archivo debe ser del mismo tipo que el original (${existingExt}). El archivo recibido es ${newExt}.`,
+      });
+    }
+
     const command = new PutObjectCommand({
       Bucket: BUCKET_NAME,
       Key: key,

@@ -150,6 +150,16 @@ export const VideoItem = ({ video, onDelete, onRename, folders, canDelete = true
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Validate that the replacement file has the same extension
+    const getExt = (name: string) => name.slice(name.lastIndexOf('.')).toLowerCase();
+    const existingExt = getExt(video.name);
+    const newExt = getExt(file.name);
+    if (existingExt !== newExt) {
+      alert(`El archivo debe ser del mismo tipo que el original (${existingExt}). El archivo seleccionado es ${newExt}.`);
+      if (replaceFileInputRef.current) replaceFileInputRef.current.value = '';
+      return;
+    }
+
     setReplacing(true);
     setReplaceProgress(0);
     try {
