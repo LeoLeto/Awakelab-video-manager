@@ -62,43 +62,50 @@ export const uploadVideoToS3 = async (
   onProgress?: (progress: number) => void
 ): Promise<string> => {
   try {
-    const formData = new FormData();
-    formData.append('video', file);
-    formData.append('folder', folder);
-
-    const xhr = new XMLHttpRequest();
+    // Step 1: request a presigned PUT URL from our server (auth + permission check happens here)
     const token = getAuthToken();
+    const presignRes = await authFetch(`${API_BASE_URL}/upload/presigned-url`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` }),
+      },
+      body: JSON.stringify({ folder, filename: file.name, contentType: file.type }),
+    });
 
-    return new Promise((resolve, reject) => {
+    if (!presignRes.ok) {
+      const err = await presignRes.json().catch(() => ({ error: 'Upload failed' }));
+      throw new Error(err.error || 'Failed to get upload URL');
+    }
+
+    const { uploadUrl, key } = await presignRes.json();
+
+    // Step 2: upload directly to S3 — the file never passes through our server
+    await new Promise<void>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+
       xhr.upload.addEventListener('progress', (e) => {
         if (e.lengthComputable && onProgress) {
-          const progress = (e.loaded / e.total) * 100;
-          onProgress(progress);
+          onProgress((e.loaded / e.total) * 100);
         }
       });
 
       xhr.addEventListener('load', () => {
-        if (xhr.status === 401 && _onUnauthorized) {
-          _onUnauthorized();
-          reject(new Error('Unauthorized'));
-        } else if (xhr.status === 200) {
-          const response = JSON.parse(xhr.responseText);
-          resolve(response.key);
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve();
         } else {
-          reject(new Error('Upload failed'));
+          reject(new Error(`S3 upload failed (${xhr.status})`))
         }
       });
 
-      xhr.addEventListener('error', () => {
-        reject(new Error('Upload failed'));
-      });
+      xhr.addEventListener('error', () => reject(new Error('Upload failed')));
 
-      xhr.open('POST', `${API_BASE_URL}/upload`);
-      if (token) {
-        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-      }
-      xhr.send(formData);
+      xhr.open('PUT', uploadUrl);
+      xhr.setRequestHeader('Content-Type', file.type);
+      xhr.send(file);
     });
+
+    return key;
   } catch (error) {
     console.error('Error uploading video:', error);
     throw error;
@@ -111,45 +118,57 @@ export const replaceVideo = async (
   onProgress?: (progress: number) => void
 ): Promise<void> => {
   try {
-    const formData = new FormData();
-    formData.append('video', file);
-
-    const xhr = new XMLHttpRequest();
     const token = getAuthToken();
 
-    return new Promise((resolve, reject) => {
+    // Step 1: request presigned URL (server validates the file extension here)
+    const presignRes = await authFetch(`${API_BASE_URL}/videos/${encodeURIComponent(key)}/replace/presigned-url`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` }),
+      },
+      body: JSON.stringify({ filename: file.name, contentType: file.type }),
+    });
+
+    if (!presignRes.ok) {
+      const err = await presignRes.json().catch(() => ({ error: 'Replace failed' }));
+      throw new Error(err.error || 'Replace failed');
+    }
+
+    const { uploadUrl } = await presignRes.json();
+
+    // Step 2: upload directly to S3
+    await new Promise<void>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+
       xhr.upload.addEventListener('progress', (e) => {
         if (e.lengthComputable && onProgress) {
-          const progress = (e.loaded / e.total) * 100;
-          onProgress(progress);
+          onProgress((e.loaded / e.total) * 100);
         }
       });
 
       xhr.addEventListener('load', () => {
-        if (xhr.status === 401 && _onUnauthorized) {
-          _onUnauthorized();
-          reject(new Error('Unauthorized'));
-        } else if (xhr.status === 200) {
+        if (xhr.status >= 200 && xhr.status < 300) {
           resolve();
         } else {
-          try {
-            const response = JSON.parse(xhr.responseText);
-            reject(new Error(response.error || 'Replace failed'));
-          } catch {
-            reject(new Error('Replace failed'));
-          }
+          reject(new Error(`S3 upload failed (${xhr.status})`));
         }
       });
 
-      xhr.addEventListener('error', () => {
-        reject(new Error('Replace failed'));
-      });
+      xhr.addEventListener('error', () => reject(new Error('Replace failed')));
 
-      xhr.open('POST', `${API_BASE_URL}/videos/${encodeURIComponent(key)}/replace`);
-      if (token) {
-        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-      }
-      xhr.send(formData);
+      xhr.open('PUT', uploadUrl);
+      xhr.setRequestHeader('Content-Type', file.type);
+      xhr.send(file);
+    });
+
+    // Step 3: notify server to invalidate CloudFront cache
+    await authFetch(`${API_BASE_URL}/videos/${encodeURIComponent(key)}/replace/complete`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` }),
+      },
     });
   } catch (error) {
     console.error('Error replacing video:', error);

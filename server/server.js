@@ -15,6 +15,7 @@ import {
   CopyObjectCommand,
   HeadObjectCommand
 } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { CloudFrontClient, CreateInvalidationCommand } from '@aws-sdk/client-cloudfront';
 
 dotenv.config();
@@ -453,6 +454,36 @@ app.get('/api/videos', authenticateToken, async (req, res) => {
   }
 });
 
+// Presigned URL for new upload (file goes directly from client to S3, never through this server)
+app.post('/api/upload/presigned-url', authenticateToken, requirePermission('canUpload'), async (req, res) => {
+  try {
+    const { folder, filename, contentType } = req.body;
+    if (!filename || !contentType) {
+      return res.status(400).json({ error: 'filename and contentType are required' });
+    }
+
+    const sanitizedFolder = (folder && folder.trim()) ? folder.trim() : 'Uncategorized';
+    const key = sanitizedFolder === 'Uncategorized' ? filename : `${sanitizedFolder}/${filename}`;
+
+    const command = new PutObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: key,
+      ContentType: contentType,
+    });
+
+    const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+
+    res.json({
+      uploadUrl,
+      key,
+      fileUrl: `https://${CLOUDFRONT_DOMAIN}/${encodeURIComponent(key).replace(/%2F/g, '/')}`,
+    });
+  } catch (error) {
+    console.error('Error generating presigned URL:', error);
+    res.status(500).json({ error: 'Failed to generate upload URL' });
+  }
+});
+
 // Upload video
 app.post('/api/upload', authenticateToken, requirePermission('canUpload'), upload.single('video'), async (req, res) => {
   try {
@@ -485,6 +516,68 @@ app.post('/api/upload', authenticateToken, requirePermission('canUpload'), uploa
   } catch (error) {
     console.error('Error uploading video:', error);
     res.status(500).json({ error: 'Failed to upload video' });
+  }
+});
+
+// Presigned URL for replacing a video (validates extension, then lets client upload directly to S3)
+app.post('/api/videos/:key(*)/replace/presigned-url', authenticateToken, requirePermission('canUpload'), async (req, res) => {
+  try {
+    const key = req.params.key;
+    const { filename, contentType } = req.body;
+
+    if (!filename || !contentType) {
+      return res.status(400).json({ error: 'filename and contentType are required' });
+    }
+
+    const getExt = (name) => name.slice(name.lastIndexOf('.')).toLowerCase();
+    const existingExt = getExt(key);
+    const newExt = getExt(filename);
+    if (existingExt !== newExt) {
+      return res.status(400).json({
+        error: `El archivo debe ser del mismo tipo que el original (${existingExt}). El archivo recibido es ${newExt}.`,
+      });
+    }
+
+    const command = new PutObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: key,
+      ContentType: contentType,
+    });
+
+    const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+    res.json({ uploadUrl });
+  } catch (error) {
+    console.error('Error generating presigned URL for replace:', error);
+    res.status(500).json({ error: 'Failed to generate upload URL' });
+  }
+});
+
+// Complete a replace upload — invalidates CloudFront cache after the client has uploaded directly to S3
+app.post('/api/videos/:key(*)/replace/complete', authenticateToken, requirePermission('canUpload'), async (req, res) => {
+  try {
+    const key = req.params.key;
+    let cacheInvalidated = false;
+
+    if (cloudFrontClient && CLOUDFRONT_DISTRIBUTION_ID) {
+      try {
+        const invalidateCommand = new CreateInvalidationCommand({
+          DistributionId: CLOUDFRONT_DISTRIBUTION_ID,
+          InvalidationBatch: {
+            CallerReference: `replace-${Date.now()}`,
+            Paths: { Quantity: 1, Items: [`/${key}`] },
+          },
+        });
+        await cloudFrontClient.send(invalidateCommand);
+        cacheInvalidated = true;
+      } catch (cfError) {
+        console.warn('CloudFront invalidation failed (non-fatal):', cfError.message);
+      }
+    }
+
+    res.json({ success: true, cacheInvalidated });
+  } catch (error) {
+    console.error('Error completing replace:', error);
+    res.status(500).json({ error: 'Failed to complete replace' });
   }
 });
 
