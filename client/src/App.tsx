@@ -8,9 +8,12 @@ import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/useAuth';
 import { listVideosFromS3, deleteVideoFromS3, getAllFolders, createFolder, deleteFolder, renameFolder, changeOwnPassword } from './services/apiService';
 import type { VideoFile } from './services/apiService';
+import logoWhite from './assets/VIDEOMANAGER-logo-white.png';
+import iconUser from './assets/icons/cyan-user.png';
+import iconLogout from './assets/icons/cyan-logout.png';
 import './App.css';
 
-const APP_VERSION = '2.8';
+const APP_VERSION = '3.0';
 
 // ─── Self-service password change modal ──────────────────────────────────────
 function SelfChangePasswordModal({ username, onClose }: { username: string; onClose: () => void }) {
@@ -273,8 +276,8 @@ function VideoManagerContent() {
       <header className="app-header">
         <div className="header-content">
           <div className="header-title">
-            <h1>🎥 Video Manager</h1>
-            <p>Sube, organiza y gestiona tus videos con AWS S3</p>
+            <img src={logoWhite} alt="Video Manager" className="header-logo" />
+            <span className="app-version">v{APP_VERSION}</span>
           </div>
           <div className="header-user">
             {isAdmin && (
@@ -282,7 +285,7 @@ function VideoManagerContent() {
                 onClick={() => setView(v => v === 'admin' ? 'videos' : 'admin')}
                 className={`admin-nav-button ${effectiveView === 'admin' ? 'admin-nav-button--active' : ''}`}
               >
-                {effectiveView === 'admin' ? '🎥 Videos' : '⚙️ Usuarios'}
+                {effectiveView === 'admin' ? 'Videos' : 'Usuarios'}
               </button>
             )}
             <button
@@ -290,12 +293,13 @@ function VideoManagerContent() {
               onClick={() => setShowSelfPasswordModal(true)}
               title="Cambiar mi contraseña"
             >
-              👤 {username}{isAdmin && ' (Admin)'}
+              <img src={iconUser} alt="" className="btn-icon" /> {username}{isAdmin && ' (Admin)'}
             </button>
-            <button onClick={logout} className="logout-button">Cerrar sesión</button>
+            <button onClick={logout} className="logout-button">
+              <img src={iconLogout} alt="" className="btn-icon" /> Cerrar sesión
+            </button>
           </div>
         </div>
-        <span className="app-version">v{APP_VERSION}</span>
       </header>
 
       {showSelfPasswordModal && username && (

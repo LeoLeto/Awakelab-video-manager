@@ -2,6 +2,10 @@ import { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { renameVideo, moveVideo, restoreVideo, replaceVideo } from '../services/apiService';
 import type { VideoFile } from '../services/apiService';
+import iconUrl from '../assets/icons/cyan-url.png';
+import iconRename from '../assets/icons/ccyan-rername.png';
+import iconFolder from '../assets/icons/cyan-folder.png';
+import iconTrash from '../assets/icons/cyan-trash.png';
 
 interface VideoItemProps {
   video     : VideoFile;
@@ -334,7 +338,7 @@ export const VideoItem = ({ video, onDelete, onRename, folders, canDelete = true
                   disabled={restoring}
                   title="Restaurar archivo"
                 >
-                  {restoring ? '⏳ Restaurando...' : '♻️ Restaurar'}
+                  {restoring ? 'Restaurando...' : 'Restaurar'}
                 </button>
                 {canDelete && (
                   <button
@@ -342,7 +346,7 @@ export const VideoItem = ({ video, onDelete, onRename, folders, canDelete = true
                     onClick={() => setShowDeleteConfirm(true)}
                     title="Eliminar permanentemente"
                   >
-                    🗑️ Eliminar Para Siempre
+                    <img src={iconTrash} alt="" className="btn-icon" /> Eliminar Para Siempre
                   </button>
                 )}
               </>
@@ -354,14 +358,14 @@ export const VideoItem = ({ video, onDelete, onRename, folders, canDelete = true
                   onClick={handleCopyUrl}
                   title="Copiar URL"
                 >
-                  {copied ? '✓ Copiado!' : '📋 Copiar URL'}
+                  {copied ? '✓ Copiado!' : <><img src={iconUrl} alt="" className="btn-icon" /> Copiar URL</>}
                 </button>
                 <button
                   className="rename-btn"
                   onClick={handleStartRename}
                   title="Renombrar archivo"
                 >
-                  ✏️ Renombrar
+                  <img src={iconRename} alt="" className="btn-icon" /> Renombrar
                 </button>
                 {canUpload && (
                   <button
@@ -379,7 +383,7 @@ export const VideoItem = ({ video, onDelete, onRename, folders, canDelete = true
                     onClick={handleStartMove}
                     title="Mover a otra carpeta"
                   >
-                    📁 Mover
+                    <img src={iconFolder} alt="" className="btn-icon" /> Mover
                   </button>
                 )}
                 {canDelete && (
@@ -388,7 +392,7 @@ export const VideoItem = ({ video, onDelete, onRename, folders, canDelete = true
                     onClick={() => setShowDeleteConfirm(true)}
                     title="Eliminar archivo"
                   >
-                    🗑️ Eliminar
+                    <img src={iconTrash} alt="" className="btn-icon" /> Eliminar
                   </button>
                 )}
               </>

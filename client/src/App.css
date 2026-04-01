@@ -28,9 +28,9 @@ body {
 }
 
 .app-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #34455c;
   color     : white;
-  padding   : 2rem;
+  padding   : 0.75rem 2rem;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   position  : relative;
 }
@@ -44,10 +44,6 @@ body {
   gap            : 2rem;
 }
 
-.header-title {
-  flex      : 1;
-  text-align: left;
-}
 
 .header-user {
   display    : flex;
@@ -66,10 +62,17 @@ body {
   cursor       : pointer;
   transition   : background 0.2s, transform 0.15s;
   white-space  : nowrap;
+  display      : inline-flex;
+  align-items  : center;
+}
+
+.header-user .btn-icon {
+  height: 22px;
 }
 .username-button:hover {
-  background: rgba(255, 255, 255, 0.28);
-  transform : translateY(-1px);
+  background  : rgba(255, 255, 255, 0.28);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform   : translateY(-1px);
 }
 
 .logout-button {
@@ -85,8 +88,9 @@ body {
 }
 
 .logout-button:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform : translateY(-1px);
+  background  : rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform   : translateY(-1px);
 }
 
 .admin-nav-button {
@@ -99,16 +103,19 @@ body {
   font-weight  : 600;
   cursor       : pointer;
   transition   : all 0.2s;
+  display      : inline-flex;
+  align-items  : center;
 }
 
 .admin-nav-button:hover {
-  background: rgba(255, 255, 255, 0.28);
-  transform : translateY(-1px);
+  background  : rgba(255, 255, 255, 0.28);
+  border-color: rgba(255, 255, 255, 0.35);
+  transform   : translateY(-1px);
 }
 
 .admin-nav-button--active {
   background  : rgba(255, 255, 255, 0.95);
-  color       : #5a4fcf;
+  color       : #34455c;
   border-color: transparent;
 }
 
@@ -199,8 +206,8 @@ body {
 }
 .scp-btn--secondary { background: #f1f5f9; color: #475569; }
 .scp-btn--secondary:hover { background: #e2e8f0; }
-.scp-btn--primary   { background: #6366f1; color: #fff; }
-.scp-btn--primary:hover { background: #4f46e5; }
+.scp-btn--primary   { background: #5db1b8; color: #fff; }
+.scp-btn--primary:hover { background: #4a9da4; }
 .scp-btn:disabled   { opacity: 0.6; cursor: not-allowed; }
 .scp-error   { background: #fef2f2; color: #dc2626; border-radius: 6px; padding: 0.5rem 0.75rem; font-size: 0.82rem; }
 .scp-success { background: #f0fdf4; color: #16a34a; border-radius: 6px; padding: 0.5rem 0.75rem; font-size: 0.82rem; }
@@ -216,7 +223,7 @@ body {
   justify-content: center;
   align-items    : center;
   min-height     : 100vh;
-  background     : linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background     : #34455c;
 }
 
 .loading-content {
@@ -249,26 +256,25 @@ body {
   }
 }
 
+.header-title {
+  display    : flex;
+  align-items: center;
+  gap        : 0.75rem;
+}
+
+.header-logo {
+  height: 36px;
+  width : auto;
+}
+
 .app-version {
-  position     : absolute;
-  top          : 1rem;
-  right        : 2rem;
-  font-size    : 0.85rem;
+  font-size    : 0.7rem;
   opacity      : 0.8;
   background   : rgba(255, 255, 255, 0.2);
-  padding      : 0.25rem 0.75rem;
-  border-radius: 12px;
+  padding      : 0.15rem 0.5rem;
+  border-radius: 10px;
   font-weight  : 500;
-}
-
-.app-header h1 {
-  font-size    : 2.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.app-header p {
-  font-size: 1.1rem;
-  opacity  : 0.9;
+  white-space  : nowrap;
 }
 
 .app-container {
@@ -314,7 +320,7 @@ body {
 }
 
 .create-folder-btn {
-  background   : #667eea;
+  background   : #5db1b8;
   color        : white;
   border       : none;
   padding      : 0.5rem 1rem;
@@ -325,7 +331,7 @@ body {
 }
 
 .create-folder-btn:hover {
-  background: #5568d3;
+  background: #4a9da4;
 }
 
 .create-folder-form {
@@ -405,7 +411,7 @@ body {
 }
 
 .folder-item.active {
-  background: #667eea;
+  background: #5db1b8;
   color     : white;
 }
 
@@ -467,7 +473,7 @@ body {
   gap          : 0.25rem;
   opacity      : 0;
   transition   : opacity 0.2s;
-  background   : #667eea;
+  background   : #5db1b8;
   border-radius: 6px;
   padding      : 0.25rem;
   box-shadow   : 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -493,7 +499,7 @@ body {
 }
 
 .folder-item.active .folder-actions {
-  /* background: rgba(102, 126, 234, 0.95); */
+  /* background: rgba(93, 177, 184, 0.95); */
   background: #e9ecef;
 
 }
@@ -517,7 +523,7 @@ body {
   flex         : 1;
   min-width    : 0;
   padding      : 0.25rem 0.5rem;
-  border       : 1px solid #667eea;
+  border       : 1px solid #5db1b8;
   border-radius: 4px;
   font-size    : 0.9rem;
   font-weight  : 500;
@@ -536,7 +542,7 @@ body {
   transform     : translate(-50%, -50%);
   font-size     : 0.85rem;
   font-weight   : 600;
-  color         : #667eea;
+  color         : #5db1b8;
   pointer-events: none;
   white-space   : nowrap;
   background    : rgba(255, 255, 255, 0.95);
@@ -611,7 +617,7 @@ body {
 }
 
 .upload-button {
-  background   : #667eea;
+  background   : #5db1b8;
   color        : white;
   padding      : 0.75rem 1.5rem;
   border-radius: 8px;
@@ -624,9 +630,9 @@ body {
 }
 
 .upload-button:hover {
-  background: #5568d3;
+  background: #4a9da4;
   transform : translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(93, 177, 184, 0.3);
 }
 
 .upload-button.disabled {
@@ -641,7 +647,7 @@ body {
 }
 
 .folder-info strong {
-  color: #667eea;
+  color: #5db1b8;
 }
 
 .upload-progress {
@@ -687,7 +693,7 @@ body {
 }
 
 .file-status.uploading {
-  color: #667eea;
+  color: #5db1b8;
 }
 
 .file-status.completed {
@@ -726,7 +732,7 @@ body {
 
 .progress-fill {
   height    : 100%;
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  background: #5db1b8;
   transition: width 0.3s;
 }
 
@@ -800,9 +806,9 @@ body {
 }
 
 .video-item:hover {
-  border-color: #667eea;
+  border-color: #5db1b8;
   transform   : translateY(-4px);
-  box-shadow  : 0 8px 24px rgba(102, 126, 234, 0.2);
+  box-shadow  : 0 8px 24px rgba(52, 69, 92, 0.15);
 }
 
 .video-preview {
@@ -824,7 +830,7 @@ body {
   display        : flex;
   align-items    : center;
   justify-content: center;
-  background     : linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background     : #34455c;
 }
 
 .file-icon {
@@ -855,7 +861,7 @@ body {
 .file-extension {
   font-size    : 1.5rem;
   font-weight  : bold;
-  color        : #667eea;
+  color        : #5db1b8;
   text-transform: uppercase;
 }
 
@@ -944,11 +950,17 @@ body {
 }
 
 .video-actions {
-  padding       : 0 1rem 1rem;
-  display       : flex;
-  flex-wrap     : wrap;
-  gap           : 0.5rem;
-  flex-direction: column;
+  padding              : 0 1rem 1rem;
+  display              : grid;
+  grid-template-columns: 1fr 1fr;
+  gap                  : 0.5rem;
+}
+
+.btn-icon {
+  height        : 18px;
+  width         : auto;
+  vertical-align: middle;
+  margin-right  : 6px;
 }
 
 .copy-url-btn,
@@ -956,64 +968,51 @@ body {
 .move-btn,
 .replace-btn,
 .delete-btn {
-  flex         : 1;
-  padding      : 0.6rem;
-  border       : 2px solid;
+  padding      : 0.5rem 1rem;
+  border       : 1px solid #34455c;
   border-radius: 6px;
   cursor       : pointer;
-  font-size    : 0.9rem;
+  font-size    : 0.82rem;
   font-weight  : 500;
   transition   : all 0.2s;
   white-space  : nowrap;
   min-width    : 0;
-  width        : 100%;
-  background   : white;
+  background   : transparent;
+  color        : #34455c;
+  display      : flex;
+  align-items  : center;
 }
 
-.copy-url-btn {
-  border-color: #4caf50;
-  color       : #4caf50;
-}
-
-.copy-url-btn:hover {
-  background: #4caf50;
-  color     : white;
-}
-
-.rename-btn {
-  border-color: #2196F3;
-  color       : #2196F3;
-}
-
-.rename-btn:hover {
-  background: #2196F3;
-  color     : white;
-}
-
-.move-btn {
-  border-color: #ff9800;
-  color       : #ff9800;
-}
-
-.move-btn:hover {
-  background: #ff9800;
-  color     : white;
-}
-
-.replace-btn {
-  border-color: #9c27b0;
-  color       : #9c27b0;
-}
-
+.copy-url-btn:hover,
+.rename-btn:hover,
+.move-btn:hover,
 .replace-btn:hover:not(:disabled) {
-  background: #9c27b0;
-  color     : white;
+  background: rgba(52, 69, 92, 0.08);
+}
+
+.copy-url-btn:focus,
+.rename-btn:focus,
+.move-btn:focus,
+.replace-btn:focus,
+.delete-btn:focus,
+.restore-btn:focus {
+  outline: 2px solid #34455c;
+  outline-offset: 1px;
+}
+
+.delete-btn {
+  border-color: #e53935;
+  color       : #e53935;
+}
+
+.delete-btn:hover {
+  background: rgba(229, 57, 53, 0.08);
 }
 
 .replace-btn:disabled {
   border-color: #ccc;
-  color       : #ccc;
-  background  : #f5f5f5;
+  background  : #e0e0e0;
+  color       : #999;
   cursor      : not-allowed;
   opacity     : 0.6;
 }
@@ -1123,38 +1122,36 @@ body {
 }
 
 .restore-btn {
-  border-color: #4caf50;
-  color       : #4caf50;
-  background  : white;
+  padding      : 0.5rem 1rem;
+  border       : 1px solid #34455c;
+  border-radius: 6px;
+  cursor       : pointer;
+  font-size    : 0.82rem;
+  font-weight  : 500;
+  background   : transparent;
+  color        : #34455c;
+  transition   : all 0.2s;
+  display      : flex;
+  align-items  : center;
 }
 
 .restore-btn:hover:not(:disabled) {
-  background: #4caf50;
-  color     : white;
+  background: rgba(52, 69, 92, 0.08);
 }
 
 .restore-btn:disabled {
+  background: #e0e0e0;
   border-color: #ccc;
-  color       : #ccc;
-  background  : #f5f5f5;
+  color       : #999;
   cursor      : not-allowed;
   opacity     : 0.6;
 }
 
-.delete-btn {
-  border-color: #f44336;
-  color       : #f44336;
-}
-
-.delete-btn:hover {
-  background: #f44336;
-  color     : white;
-}
-
 .delete-confirm {
-  display: flex;
-  gap    : 0.5rem;
-  width  : 100%;
+  display            : grid;
+  grid-template-columns: 1fr 1fr;
+  gap                : 0.5rem;
+  grid-column        : 1 / -1;
 }
 
 .confirm-delete,
@@ -1205,6 +1202,7 @@ body {
   width         : 100%;
   padding       : 0;
   box-sizing    : border-box;
+  grid-column   : 1 / -1;
 }
 
 .move-dialog label {
@@ -1294,7 +1292,7 @@ body {
 
 .url-display code {
   font-size : 0.75rem;
-  color     : #667eea;
+  color     : #5db1b8;
   word-break: break-all;
 }
 
@@ -1324,10 +1322,6 @@ body {
 }
 
 @media (max-width: 640px) {
-  .app-header h1 {
-    font-size: 1.8rem;
-  }
-
   .video-grid {
     grid-template-columns: 1fr;
   }

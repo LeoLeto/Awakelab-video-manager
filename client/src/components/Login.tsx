@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useAuth } from '../context/useAuth';
-import awakeLogo from '../assets/awakelab.png';
+import logoBlue from '../assets/VIDEOMANAGER-logo-blue.png';
+import poweredBy from '../assets/AWAKELAB-POWERED-BY-01-8.png';
 import './Login.css';
 
 export const Login = () => {
@@ -28,13 +29,11 @@ export const Login = () => {
 
   return (
     <div className="login-container">
-      <img src={awakeLogo} alt="Awakelab" className="login-logo" />
       <div className="login-box">
         <div className="login-header">
-          <h1>🎥 Video Manager</h1>
-          <p>Ingresa tu usuario para continuar</p>
+          <img src={logoBlue} alt="Video Manager" className="login-header-logo" />
         </div>
-        
+
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group">
             <label htmlFor="username">Usuario</label>
@@ -86,6 +85,7 @@ export const Login = () => {
           <p>Contacta a tu administrador para obtener acceso</p>
         </div>
       </div>
+      <img src={poweredBy} alt="Powered by Awakelab" className="login-powered-by" />
     </div>
   );
 };
