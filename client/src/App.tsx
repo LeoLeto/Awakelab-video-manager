@@ -14,7 +14,7 @@ import iconUser from './assets/icons/cyan-user.png';
 import iconLogout from './assets/icons/cyan-logout.png';
 import './App.css';
 
-const APP_VERSION = '3.4';
+const APP_VERSION = '3.6';
 
 // ─── Self-service password change modal ──────────────────────────────────────
 function SelfChangePasswordModal({ username, onClose }: { username: string; onClose: () => void }) {
@@ -282,17 +282,23 @@ function VideoManagerContent() {
           </div>
           <div className="header-user">
             <button
-              onClick={() => setView(v => v === 'history' ? 'videos' : 'history')}
+              onClick={() => setView('videos')}
+              className={`admin-nav-button ${effectiveView === 'videos' ? 'admin-nav-button--active' : ''}`}
+            >
+              Archivos
+            </button>
+            <button
+              onClick={() => setView('history')}
               className={`admin-nav-button ${effectiveView === 'history' ? 'admin-nav-button--active' : ''}`}
             >
-              {effectiveView === 'history' ? 'Videos' : 'Historial'}
+              Historial
             </button>
             {isAdmin && (
               <button
-                onClick={() => setView(v => v === 'admin' ? 'videos' : 'admin')}
+                onClick={() => setView('admin')}
                 className={`admin-nav-button ${effectiveView === 'admin' ? 'admin-nav-button--active' : ''}`}
               >
-                {effectiveView === 'admin' ? 'Videos' : 'Usuarios'}
+                Usuarios
               </button>
             )}
             <button
