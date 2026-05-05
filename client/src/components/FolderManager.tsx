@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 interface FolderManagerProps {
   folders: string[];
@@ -8,6 +8,7 @@ interface FolderManagerProps {
   onRenameFolder: (oldName: string, newName: string) => Promise<void>;
   onDeleteFolder: (folderName: string) => Promise<void>;
   loadingFolders: boolean;
+  isAdmin: boolean;
 }
 
 export const FolderManager = ({
@@ -18,6 +19,7 @@ export const FolderManager = ({
   onRenameFolder,
   onDeleteFolder,
   loadingFolders,
+  isAdmin,
 }: FolderManagerProps) => {
   // Configuration: Set to true to keep all folders expanded
   const KEEP_ALL_EXPANDED = false;
@@ -31,15 +33,7 @@ export const FolderManager = ({
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [renamingInProgress, setRenamingInProgress] = useState(false);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
-
-  // Auto-expand first two levels when folders load
-  useEffect(() => {
-    const firstTwoLevels = folders.filter(folder => {
-      const level = getNestingLevel(folder);
-      return level <= 1; // Levels 0 and 1
-    });
-    setExpandedFolders(new Set(firstTwoLevels));
-  }, [folders]);
+  const [searchQuery,     setSearchQuery]     = useState('');
 
   // Helper function to get nesting level
   const getNestingLevel = (folderPath: string) => {
@@ -54,18 +48,35 @@ export const FolderManager = ({
 
   // Helper function to check if folder should be visible
   const isFolderVisible = (folderPath: string) => {
-    if (KEEP_ALL_EXPANDED) return true; // Show all folders when expanded mode is on
-    
-    // Check if ALL ancestors are expanded
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      const selfMatches = folderPath.toLowerCase().includes(q);
+      const hasMatchingDescendant = folders.some(
+        f => f !== folderPath && f.startsWith(folderPath + '/') && f.toLowerCase().includes(q)
+      );
+      return selfMatches || hasMatchingDescendant;
+    }
+    if (KEEP_ALL_EXPANDED) return true;
     const parts = folderPath.split('/');
     for (let i = 1; i < parts.length; i++) {
       const ancestorPath = parts.slice(0, i).join('/');
-      if (!expandedFolders.has(ancestorPath)) {
-        return false; // If any ancestor is collapsed, hide this folder
-      }
+      if (!expandedFolders.has(ancestorPath)) return false;
     }
-    
-    return true; // All ancestors are expanded
+    return true;
+  };
+
+  const highlightMatch = (text: string): React.ReactNode => {
+    const q = searchQuery.trim();
+    if (!q) return text;
+    const idx = text.toLowerCase().indexOf(q.toLowerCase());
+    if (idx === -1) return text;
+    return (
+      <>
+        {text.slice(0, idx)}
+        <mark className="folder-search-highlight">{text.slice(idx, idx + q.length)}</mark>
+        {text.slice(idx + q.length)}
+      </>
+    );
   };
 
   // Helper function to check if folder has children
@@ -168,6 +179,19 @@ export const FolderManager = ({
         </button>
       </div>
 
+      <div className="folder-search">
+        <input
+          type="text"
+          className="folder-search-input"
+          placeholder="Buscar carpetas..."
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+        />
+        {searchQuery && (
+          <button className="folder-search-clear" onClick={() => setSearchQuery('')}>✕</button>
+        )}
+      </div>
+
       {isCreating && (
         <div className="create-folder-form">
           <input
@@ -210,23 +234,27 @@ export const FolderManager = ({
             .map((folder) => {
               const nestingLevel = getNestingLevel(folder);
               const displayName = getDisplayName(folder);
-              const isExpanded = expandedFolders.has(folder);
-              const hasSub = hasChildren(folder);
+              const isSearching = !!searchQuery.trim();
+              const isExpanded  = isSearching || expandedFolders.has(folder);
+              const hasSub      = hasChildren(folder);
 
               return (
                 <div
                   key={folder}
                   className={`folder-item ${currentFolder === folder ? 'active' : ''} ${folder === 'Recycle Bin' ? 'recycle-bin' : ''}`}
-                  style={{ paddingLeft: `${1 + nestingLevel * 1.5}rem` }}
+                  style={{ paddingLeft: `${0.75 + nestingLevel * 1}rem` }}
                   onClick={() => {
                     onFolderChange(folder);
-                    // Auto-expand if has children
-                    if (hasSub && !isExpanded) {
-                      setExpandedFolders(prev => new Set(prev).add(folder));
+                    if (hasSub) {
+                      setExpandedFolders(prev => {
+                        const next = new Set(prev);
+                        if (next.has(folder)) next.delete(folder); else next.add(folder);
+                        return next;
+                      });
                     }
                   }}
                 >
-                  {hasSub && (
+                  {hasSub && !isSearching && (
                     <button
                       className="folder-expand-btn"
                       onClick={(e) => KEEP_ALL_EXPANDED ? e.stopPropagation() : toggleExpand(folder, e)}
@@ -257,7 +285,7 @@ export const FolderManager = ({
                     </div>
                   ) : (
                     <span className="folder-name" title={folder}>
-                      {folder === 'Recycle Bin' && '🗑️ '}{displayName}
+                      {folder === 'Recycle Bin' && '🗑️ '}{highlightMatch(displayName)}
                     </span>
                   )}
                   {folder !== 'Uncategorized' && folder !== 'Recycle Bin' && (
@@ -287,14 +315,16 @@ export const FolderManager = ({
                           >
                             ✏️
                           </button>
-                          <button
-                            className="folder-action-btn"
-                            onClick={(e) => handleDeleteClick(folder, e)}
-                            title="Eliminar carpeta"
-                            disabled={deletingFolder === folder}
-                          >
-                            {deletingFolder === folder ? '⏳' : '🗑️'}
-                          </button>
+                          {isAdmin && (
+                            <button
+                              className="folder-action-btn"
+                              onClick={(e) => handleDeleteClick(folder, e)}
+                              title="Eliminar carpeta"
+                              disabled={deletingFolder === folder}
+                            >
+                              {deletingFolder === folder ? '⏳' : '🗑️'}
+                            </button>
+                          )}
                         </div>
                       )}
                     </>

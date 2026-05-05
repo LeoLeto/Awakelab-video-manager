@@ -128,6 +128,50 @@ const seedFromEnv = () => {
 
 seedFromEnv();
 
+// ─── History store (file-based) ──────────────────────────────────────────────
+
+const HISTORY_FILE  = path.join(__dirname, 'data', 'history.json');
+const MAX_HISTORY   = 1000;
+
+const readHistory = () => {
+  try {
+    if (fs.existsSync(HISTORY_FILE)) {
+      return JSON.parse(fs.readFileSync(HISTORY_FILE, 'utf8'));
+    }
+  } catch (e) {
+    console.error('Failed to read history file:', e.message);
+  }
+  return { entries: [] };
+};
+
+const appendHistory = (entry) => {
+  try {
+    const dir = path.dirname(HISTORY_FILE);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    const data = readHistory();
+    data.entries.push(entry);
+    if (data.entries.length > MAX_HISTORY) {
+      data.entries = data.entries.slice(data.entries.length - MAX_HISTORY);
+    }
+    fs.writeFileSync(HISTORY_FILE, JSON.stringify(data, null, 2), 'utf8');
+  } catch (e) {
+    console.error('Failed to append history:', e.message);
+  }
+};
+
+const logHistory = (action, username, filename, folder, key, details = {}) => {
+  appendHistory({
+    id       : `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    timestamp: new Date().toISOString(),
+    action,
+    user     : username,
+    filename,
+    folder,
+    key,
+    details,
+  });
+};
+
 // Debug: Log loaded users (without passwords)
 const { users: _dbg } = readUsers();
 console.log('Loaded users:', _dbg.map(u => u.username));
@@ -473,11 +517,9 @@ app.post('/api/upload/presigned-url', authenticateToken, requirePermission('canU
 
     const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
 
-    res.json({
-      uploadUrl,
-      key,
-      fileUrl: `https://${CLOUDFRONT_DOMAIN}/${encodeURIComponent(key).replace(/%2F/g, '/')}`,
-    });
+    const fileUrl = `https://${CLOUDFRONT_DOMAIN}/${encodeURIComponent(key).replace(/%2F/g, '/')}`;
+    logHistory('upload', req.user.username, filename, sanitizedFolder, key);
+    res.json({ uploadUrl, key, fileUrl });
   } catch (error) {
     console.error('Error generating presigned URL:', error);
     res.status(500).json({ error: 'Failed to generate upload URL' });
@@ -508,8 +550,9 @@ app.post('/api/upload', authenticateToken, requirePermission('canUpload'), uploa
 
     await s3Client.send(command);
 
-    res.json({ 
-      success: true, 
+    logHistory('upload', req.user.username, filename, folder, key);
+    res.json({
+      success: true,
       key,
       url: `https://${CLOUDFRONT_DOMAIN}/${encodeURIComponent(key).replace(/%2F/g, '/')}`
     });
@@ -660,6 +703,10 @@ app.delete('/api/videos/:key(*)', authenticateToken, requirePermission('canDelet
       });
       await s3Client.send(command);
       console.log('Permanent delete successful');
+      const rbParts   = key.replace('Recycle Bin/', '').split('_');
+      const rbFolder  = rbParts[1] || 'Recycle Bin';
+      const rbFile    = rbParts.slice(2).join('_') || key;
+      logHistory('delete_permanent', req.user.username, rbFile, rbFolder, key);
       res.json({ success: true, permanent: true });
       return;
     }
@@ -695,6 +742,7 @@ app.delete('/api/videos/:key(*)', authenticateToken, requirePermission('canDelet
 
     await s3Client.send(deleteCommand);
     console.log('Original delete successful');
+    logHistory('delete', req.user.username, fileName, originalPath, key);
     res.json({ success: true, movedToRecycleBin: true });
   } catch (error) {
     console.error('=== ERROR DELETING VIDEO ===');
@@ -748,8 +796,11 @@ app.put('/api/videos/:key(*)/rename', authenticateToken, async (req, res) => {
     await s3Client.send(deleteCommand);
     console.log('Delete successful');
 
-    res.json({ 
-      success: true, 
+    const renameFolder  = keyParts.slice(0, -1).join('/') || 'Uncategorized';
+    const oldFilename   = oldKey.split('/').at(-1);
+    logHistory('rename', req.user.username, newName, renameFolder, newKey, { oldName: oldFilename });
+    res.json({
+      success: true,
       newKey,
       url: `https://${CLOUDFRONT_DOMAIN}/${encodeURIComponent(newKey).replace(/%2F/g, '/')}`
     });
@@ -823,8 +874,10 @@ app.put('/api/videos/:key(*)/move', authenticateToken, requirePermission('canMov
     await s3Client.send(deleteCommand);
     console.log('Delete successful');
 
-    res.json({ 
-      success: true, 
+    const fromFolder = oldKey.split('/').slice(0, -1).join('/') || 'Uncategorized';
+    logHistory('move', req.user.username, fileName, targetFolder || 'Uncategorized', newKey, { fromFolder });
+    res.json({
+      success: true,
       newKey,
       url: `https://${CLOUDFRONT_DOMAIN}/${encodeURIComponent(newKey).replace(/%2F/g, '/')}`
     });
@@ -886,8 +939,9 @@ app.put('/api/videos/:key(*)/restore', authenticateToken, async (req, res) => {
 
     await s3Client.send(deleteCommand);
 
-    res.json({ 
-      success: true, 
+    logHistory('restore', req.user.username, fileName, originalPath || 'Uncategorized', restoreKey);
+    res.json({
+      success: true,
       restoredKey: restoreKey,
       url: `https://${CLOUDFRONT_DOMAIN}/${encodeURIComponent(restoreKey).replace(/%2F/g, '/')}`
     });
@@ -1013,6 +1067,17 @@ app.delete('/api/folders/:folderName', authenticateToken, async (req, res) => {
     console.error('Error deleting folder:', error);
     res.status(500).json({ error: 'Failed to delete folder' });
   }
+});
+
+// ─── History endpoint ────────────────────────────────────────────────────────
+
+app.get('/api/history', authenticateToken, (req, res) => {
+  const { entries } = readHistory();
+  const visible = req.user.isAdmin
+    ? entries
+    : entries.filter(e => e.user === req.user.username);
+  // Return newest first
+  res.json({ entries: visible.slice().reverse() });
 });
 
 const PORT = process.env.PORT || 3001;

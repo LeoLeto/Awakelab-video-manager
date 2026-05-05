@@ -554,7 +554,6 @@ export const UserManager = ({ folders }: Props) => {
                       <button
                         className="um-btn-icon"
                         title="Cambiar contraseña"
-                        style={{ visibility: (isSelf || !isAdminRow) ? 'visible' : 'hidden' }}
                         onClick={() => setChangingPasswordFor(u.username)}
                       >
                         🔑

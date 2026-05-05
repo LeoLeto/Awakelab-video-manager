@@ -7,13 +7,14 @@ import { UserManager } from './components/UserManager';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/useAuth';
 import { listVideosFromS3, deleteVideoFromS3, getAllFolders, createFolder, deleteFolder, renameFolder, changeOwnPassword } from './services/apiService';
+import { HistoryPanel } from './components/HistoryPanel';
 import type { VideoFile } from './services/apiService';
 import logoWhite from './assets/VIDEOMANAGER-logo-white.png';
 import iconUser from './assets/icons/cyan-user.png';
 import iconLogout from './assets/icons/cyan-logout.png';
 import './App.css';
 
-const APP_VERSION = '3.0';
+const APP_VERSION = '3.4';
 
 // ─── Self-service password change modal ──────────────────────────────────────
 function SelfChangePasswordModal({ username, onClose }: { username: string; onClose: () => void }) {
@@ -96,7 +97,7 @@ function VideoManagerContent() {
   const [loading, setLoading] = useState(false);
   const [loadingFolders, setLoadingFolders] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [view, setView]                         = useState<'videos' | 'admin'>('videos');
+  const [view, setView] = useState<'videos' | 'admin' | 'history'>('videos');
   const [showSelfPasswordModal, setShowSelfPasswordModal] = useState(false);
 
   const loadVideos = async (forceRefresh: boolean = false) => {
@@ -269,7 +270,7 @@ function VideoManagerContent() {
     return <Login />;
   }
 
-  const effectiveView = isAdmin ? view : 'videos';
+  const effectiveView = isAdmin ? view : (view === 'history' ? 'history' : 'videos');
 
   return (
     <div className="app">
@@ -280,6 +281,12 @@ function VideoManagerContent() {
             <span className="app-version">v{APP_VERSION}</span>
           </div>
           <div className="header-user">
+            <button
+              onClick={() => setView(v => v === 'history' ? 'videos' : 'history')}
+              className={`admin-nav-button ${effectiveView === 'history' ? 'admin-nav-button--active' : ''}`}
+            >
+              {effectiveView === 'history' ? 'Videos' : 'Historial'}
+            </button>
             {isAdmin && (
               <button
                 onClick={() => setView(v => v === 'admin' ? 'videos' : 'admin')}
@@ -313,6 +320,10 @@ function VideoManagerContent() {
         <div className="admin-area">
           <UserManager folders={folders} />
         </div>
+      ) : effectiveView === 'history' ? (
+        <div className="history-area">
+          <HistoryPanel />
+        </div>
       ) : (
         <div className="app-container">
           <aside className="sidebar">
@@ -324,6 +335,7 @@ function VideoManagerContent() {
               onRenameFolder={handleRenameFolder}
               onDeleteFolder={handleDeleteFolder}
               loadingFolders={loadingFolders}
+              isAdmin={isAdmin}
             />
           </aside>
 

@@ -381,6 +381,30 @@ export const adminDeleteUser = async (username: string): Promise<void> => {
   }
 };
 
+// ─── History ─────────────────────────────────────────────────────────────────
+
+export type HistoryAction = 'upload' | 'delete' | 'delete_permanent' | 'rename' | 'move' | 'restore';
+
+export interface HistoryEntry {
+  id       : string;
+  timestamp: string;
+  action   : HistoryAction;
+  user     : string;
+  filename : string;
+  folder   : string;
+  key      : string;
+  details  : Record<string, string>;
+}
+
+export const getHistory = async (): Promise<HistoryEntry[]> => {
+  const response = await authFetch(`${API_BASE_URL}/history`, {
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) throw new Error('Failed to fetch history');
+  const data = await response.json();
+  return data.entries;
+};
+
 export const changeOwnPassword = async (currentPassword: string, newPassword: string): Promise<void> => {
   const response = await authFetch(`${API_BASE_URL}/user/password`, {
     method : 'PUT',

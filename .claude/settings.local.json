@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(Get-ChildItem -Recurse -Directory)",
+      "Bash(Select-Object -First 30 FullName)",
+      "Bash(xargs grep -l \"log\\\\|audit\\\\|history\")"
     ]
   }
 }
