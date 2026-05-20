@@ -350,9 +350,9 @@ app.put('/api/admin/users/:username', authenticateToken, requireAdmin, async (re
       return res.status(400).json({ error: 'Cannot remove your own admin rights' });
     }
 
-    // Prevent changing another admin's password
-    if (password && username !== req.user.username && data.users[idx].isAdmin) {
-      return res.status(403).json({ error: 'Cannot change another admin\'s password' });
+    // Only the superadmin can change the superadmin's password
+    if (password && username === 'superadmin' && req.user.username !== 'superadmin') {
+      return res.status(403).json({ error: 'No se puede cambiar la contraseña del superadmin' });
     }
 
     if (isAdmin !== undefined) data.users[idx].isAdmin = !!isAdmin;
