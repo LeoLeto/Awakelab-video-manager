@@ -597,3 +597,196 @@
   gap            : 0.75rem;
   padding-top    : 0.5rem;
 }
+
+/* ── Responsive: tablet ─────────────────────────────────────── */
+@media (max-width: 900px) {
+  .um-container {
+    padding: 1.25rem 1rem;
+  }
+
+  .um-table th,
+  .um-table td {
+    padding: 0.7rem 0.6rem;
+  }
+
+  .um-table th:nth-child(3),
+  .um-table th:nth-child(4),
+  .um-table th:nth-child(5) {
+    width: 90px;
+  }
+}
+
+/* ── Responsive: mobile (table → cards) ─────────────────────── */
+@media (max-width: 720px) {
+  .um-container {
+    padding: 1rem 0.5rem;
+  }
+
+  .um-header {
+    flex-direction: column;
+    align-items   : stretch;
+  }
+
+  .um-header h2 {
+    font-size: 1.2rem;
+  }
+
+  .um-header .um-btn--primary {
+    align-self: flex-start;
+  }
+
+  .um-table-wrapper {
+    background: transparent;
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  .um-table,
+  .um-table thead,
+  .um-table tbody,
+  .um-table tr,
+  .um-table td {
+    display: block;
+    width  : 100%;
+  }
+
+  .um-table thead {
+    position: absolute;
+    left    : -9999px;
+    width   : 1px;
+    height  : 1px;
+    overflow: hidden;
+  }
+
+  .um-table tr {
+    background   : #fff;
+    border       : 1px solid #f1f5f9;
+    border-radius: 12px;
+    box-shadow   : 0 1px 4px rgba(0,0,0,0.06);
+    padding      : 0.85rem 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .um-table tbody tr:last-child {
+    border-bottom: 1px solid #f1f5f9;
+    margin-bottom: 0;
+  }
+
+  .um-table tbody tr:hover {
+    background: #fff;
+  }
+
+  .um-row--admin {
+    background: #fafbff !important;
+    border-color: #e0e7ff;
+  }
+
+  .um-table td {
+    padding      : 0.45rem 0;
+    border       : none;
+    display      : flex;
+    align-items  : center;
+    justify-content: space-between;
+    gap          : 0.75rem;
+    min-height   : 1.75rem;
+  }
+
+  .um-table td::before {
+    content       : attr(data-label);
+    font-size     : 0.75rem;
+    font-weight   : 600;
+    color         : #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    flex-shrink   : 0;
+  }
+
+  /* User cell — full width, no label, divider beneath */
+  .um-table td:first-child {
+    display      : block;
+    padding      : 0 0 0.6rem;
+    border-bottom: 1px solid #f1f5f9;
+    margin-bottom: 0.5rem;
+  }
+  .um-table td:first-child::before {
+    display: none;
+  }
+
+  /* Directory cell — column layout when expanded */
+  .um-dir-cell {
+    flex-wrap      : wrap;
+    justify-content: flex-end;
+    flex           : 1;
+    min-width      : 0;
+  }
+
+  .um-dir-cell select {
+    flex: 0 1 auto;
+  }
+
+  /* Actions row — right-aligned */
+  .um-table td:last-child {
+    justify-content: flex-end;
+  }
+
+  .um-table td:last-child::before {
+    margin-right: auto;
+  }
+
+  .um-actions-cell {
+    flex-shrink: 0;
+  }
+
+  /* Footer button full width */
+  .um-footer {
+    margin-top: 1rem;
+  }
+
+  .um-btn--save {
+    width        : 100%;
+    padding      : 0.75rem 1rem;
+  }
+}
+
+/* ── Responsive: very small phones ──────────────────────────── */
+@media (max-width: 420px) {
+  .um-username {
+    font-size: 0.9rem;
+  }
+
+  .um-avatar {
+    width    : 32px;
+    height   : 32px;
+    font-size: 0.72rem;
+  }
+
+  .um-table td::before {
+    font-size: 0.7rem;
+  }
+
+  .um-dir-cell select {
+    font-size: 0.8rem;
+    padding  : 0.3rem 0.45rem;
+  }
+
+  .um-btn-dirs {
+    font-size: 0.7rem;
+  }
+
+  .um-modal-body {
+    padding: 1rem;
+  }
+
+  .um-modal-header {
+    padding: 1rem 1rem 0;
+  }
+
+  .um-modal-footer {
+    flex-direction : column-reverse;
+    align-items    : stretch;
+  }
+
+  .um-modal-footer .um-btn {
+    width: 100%;
+  }
+}

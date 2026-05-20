@@ -290,3 +290,82 @@
   font-size: 0.85rem;
   color    : #666;
 }
+
+/* ─── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 720px) {
+  .hp-header {
+    flex-direction: column;
+    align-items   : stretch;
+    gap           : 0.5rem;
+  }
+
+  .hp-header h2 {
+    font-size: 1.15rem;
+  }
+
+  .hp-refresh-btn {
+    align-self: flex-start;
+  }
+
+  .hp-filters {
+    gap: 0.5rem;
+  }
+
+  .hp-search {
+    min-width: 0;
+    flex     : 1 1 100%;
+  }
+
+  .hp-select {
+    flex: 1 1 calc(50% - 0.25rem);
+  }
+
+  .hp-clear-btn {
+    flex: 1 1 100%;
+  }
+
+  .hp-table-wrapper {
+    border-radius: 8px;
+    margin       : 0 -0.25rem;
+  }
+
+  .hp-table thead th {
+    padding: 0.55rem 0.6rem;
+    font-size: 0.7rem;
+  }
+
+  .hp-table td {
+    padding: 0.55rem 0.6rem;
+  }
+
+  .hp-cell--file {
+    max-width: 140px;
+  }
+
+  .hp-cell--folder {
+    max-width: 120px;
+  }
+
+  .hp-pagination {
+    gap: 0.5rem;
+  }
+
+  .hp-pagination button {
+    padding  : 0.3rem 0.6rem;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .hp-select {
+    flex: 1 1 100%;
+  }
+
+  .hp-cell--file {
+    max-width: 110px;
+  }
+
+  .hp-cell--folder {
+    max-width: 90px;
+  }
+}

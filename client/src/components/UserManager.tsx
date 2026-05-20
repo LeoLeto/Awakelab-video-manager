@@ -480,7 +480,7 @@ export const UserManager = ({ folders }: Props) => {
               return (
                 <tr key={u.username} className={isAdminRow ? 'um-row--admin' : ''}>
                   {/* Avatar + name */}
-                  <td>
+                  <td data-label="Usuario">
                     <div className="um-user-cell">
                       <span className="um-avatar">{initials(u.username)}</span>
                       <div>
@@ -491,7 +491,7 @@ export const UserManager = ({ folders }: Props) => {
                   </td>
 
                   {/* Directory access */}
-                  <td>
+                  <td data-label="Acceso a directorios">
                     {isAdminRow ? (
                       <span className="um-all-label">Todos</span>
                     ) : (
@@ -522,7 +522,7 @@ export const UserManager = ({ folders }: Props) => {
                   </td>
 
                   {/* canUpload */}
-                  <td className="um-toggle-cell">
+                  <td className="um-toggle-cell" data-label="Subir archivos">
                     <Toggle
                       checked={isAdminRow || d.canUpload}
                       onChange={v => setDraft(u.username, 'canUpload', v)}
@@ -531,7 +531,7 @@ export const UserManager = ({ folders }: Props) => {
                   </td>
 
                   {/* canDelete */}
-                  <td className="um-toggle-cell">
+                  <td className="um-toggle-cell" data-label="Eliminar archivos">
                     <Toggle
                       checked={isAdminRow || d.canDelete}
                       onChange={v => setDraft(u.username, 'canDelete', v)}
@@ -540,7 +540,7 @@ export const UserManager = ({ folders }: Props) => {
                   </td>
 
                   {/* canMove */}
-                  <td className="um-toggle-cell">
+                  <td className="um-toggle-cell" data-label="Mover archivos">
                     <Toggle
                       checked={isAdminRow || d.canMove}
                       onChange={v => setDraft(u.username, 'canMove', v)}
@@ -549,7 +549,7 @@ export const UserManager = ({ folders }: Props) => {
                   </td>
 
                   {/* Actions */}
-                  <td>
+                  <td data-label="Acciones">
                     <div className="um-actions-cell">
                       <button
                         className="um-btn-icon"

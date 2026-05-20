@@ -14,7 +14,7 @@ import iconUser from './assets/icons/cyan-user.png';
 import iconLogout from './assets/icons/cyan-logout.png';
 import './App.css';
 
-const APP_VERSION = '3.6';
+const APP_VERSION = '3.7';
 
 // ─── Self-service password change modal ──────────────────────────────────────
 function SelfChangePasswordModal({ username, onClose }: { username: string; onClose: () => void }) {
