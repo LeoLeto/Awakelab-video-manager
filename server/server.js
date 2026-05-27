@@ -442,6 +442,18 @@ app.get('/api/videos', authenticateToken, async (req, res) => {
     const folder = req.query.folder || '';
     const prefix = folder && folder !== 'Uncategorized' ? `${folder}/` : '';
 
+    // Determine if this user's view should be filtered
+    const isRestricted = !req.user?.isAdmin && req.user?.permissions?.directoryAccess === 'specific';
+    const allowedDirs  = isRestricted ? (req.user.permissions.allowedDirectories || []) : null;
+
+    // Restricted users can only query folders they have access to (Recycle Bin is always allowed)
+    if (isRestricted && folder !== 'Recycle Bin') {
+      const isAllowed = allowedDirs.some(dir => folder === dir || folder.startsWith(dir + '/'));
+      if (!isAllowed) {
+        return res.status(403).json({ error: 'No tienes acceso a esta carpeta' });
+      }
+    }
+
     const command = new ListObjectsV2Command({
       Bucket: BUCKET_NAME,
       Prefix: prefix,
@@ -449,10 +461,6 @@ app.get('/api/videos', authenticateToken, async (req, res) => {
 
     const response = await s3Client.send(command);
     const videos = [];
-
-    // Determine if this user's view should be filtered
-    const isRestricted = !req.user?.isAdmin && req.user?.permissions?.directoryAccess === 'specific';
-    const allowedDirs  = isRestricted ? (req.user.permissions.allowedDirectories || []) : null;
 
     if (response.Contents) {
       for (const item of response.Contents) {
@@ -958,6 +966,15 @@ app.post('/api/folders', authenticateToken, async (req, res) => {
 
     if (!folderName) {
       return res.status(400).json({ error: 'Folder name required' });
+    }
+
+    // Restricted users may only create folders inside directories they're allowed to access
+    if (!req.user?.isAdmin && req.user?.permissions?.directoryAccess === 'specific') {
+      const allowed = req.user.permissions.allowedDirectories ?? [];
+      const isWithinAllowed = allowed.some(dir => folderName === dir || folderName.startsWith(dir + '/'));
+      if (!isWithinAllowed) {
+        return res.status(403).json({ error: 'No tienes permiso para crear carpetas en este directorio' });
+      }
     }
 
     const command = new PutObjectCommand({

@@ -14,7 +14,7 @@ import iconUser from './assets/icons/cyan-user.png';
 import iconLogout from './assets/icons/cyan-logout.png';
 import './App.css';
 
-const APP_VERSION = '3.7';
+const APP_VERSION = '3.9';
 
 // ─── Self-service password change modal ──────────────────────────────────────
 function SelfChangePasswordModal({ username, onClose }: { username: string; onClose: () => void }) {
@@ -93,7 +93,8 @@ function VideoManagerContent() {
   const [videos, setVideos] = useState<VideoFile[]>([]);
   const [videoCache, setVideoCache] = useState<Map<string, VideoFile[]>>(new Map());
   const [folders, setFolders] = useState<string[]>(['Uncategorized', 'Recycle Bin']);
-  const [currentFolder, setCurrentFolder] = useState('Uncategorized');
+  // Empty until folders load and a folder the user can actually access is picked.
+  const [currentFolder, setCurrentFolder] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingFolders, setLoadingFolders] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -137,6 +138,13 @@ function VideoManagerContent() {
     try {
       const folderList = await getAllFolders();
       setFolders(folderList);
+      // If the current selection isn't accessible (initial empty state,
+      // or a previous user's folder), land on a folder the user can see.
+      setCurrentFolder(prev => {
+        if (prev && folderList.includes(prev)) return prev;
+        if (folderList.includes('Uncategorized')) return 'Uncategorized';
+        return folderList.find(f => f !== 'Recycle Bin') ?? '';
+      });
     } catch (err) {
       console.error('Failed to load folders:', err);
     } finally {
@@ -145,15 +153,18 @@ function VideoManagerContent() {
   };
 
   useEffect(() => {
-    if (isAuthenticated) {
+    // Only load videos once a folder has been resolved that the user can access.
+    if (isAuthenticated && currentFolder && folders.includes(currentFolder)) {
       loadVideos();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentFolder, isAuthenticated]);
+  }, [currentFolder, isAuthenticated, folders]);
 
   useEffect(() => {
     if (isAuthenticated) {
       setView('videos'); // reset on every new login
+      setCurrentFolder('');
+      setVideoCache(new Map());
       loadFolders();
     }
   }, [isAuthenticated]);
@@ -244,7 +255,10 @@ function VideoManagerContent() {
       });
       
       if (currentFolder === folderName) {
-        setCurrentFolder('Uncategorized');
+        const fallback = folders.includes('Uncategorized')
+          ? 'Uncategorized'
+          : folders.find(f => f !== folderName && f !== 'Recycle Bin') ?? '';
+        setCurrentFolder(fallback);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al eliminar la carpeta');

@@ -36,6 +36,26 @@ const getAuthToken = (): string | null => {
   return localStorage.getItem('auth_token');
 };
 
+// Browsers leave file.type empty for many extensions (fonts, some archives, etc).
+// Fall back to a sensible MIME type so the presign endpoint doesn't reject the request.
+const EXTENSION_MIME: Record<string, string> = {
+  woff2: 'font/woff2',
+  woff : 'font/woff',
+  ttf  : 'font/ttf',
+  otf  : 'font/otf',
+  eot  : 'application/vnd.ms-fontobject',
+};
+
+const resolveContentType = (file: File): string => {
+  if (file.type) return file.type;
+  const dot = file.name.lastIndexOf('.');
+  if (dot >= 0) {
+    const ext = file.name.slice(dot + 1).toLowerCase();
+    if (EXTENSION_MIME[ext]) return EXTENSION_MIME[ext];
+  }
+  return 'application/octet-stream';
+};
+
 export const listVideosFromS3 = async (folder: string = ''): Promise<VideoFile[]> => {
   try {
     const token = getAuthToken();
@@ -64,13 +84,14 @@ export const uploadVideoToS3 = async (
   try {
     // Step 1: request a presigned PUT URL from our server (auth + permission check happens here)
     const token = getAuthToken();
+    const contentType = resolveContentType(file);
     const presignRes = await authFetch(`${API_BASE_URL}/upload/presigned-url`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         ...(token && { 'Authorization': `Bearer ${token}` }),
       },
-      body: JSON.stringify({ folder, filename: file.name, contentType: file.type }),
+      body: JSON.stringify({ folder, filename: file.name, contentType }),
     });
 
     if (!presignRes.ok) {
@@ -101,7 +122,7 @@ export const uploadVideoToS3 = async (
       xhr.addEventListener('error', () => reject(new Error('Upload failed')));
 
       xhr.open('PUT', uploadUrl);
-      xhr.setRequestHeader('Content-Type', file.type);
+      xhr.setRequestHeader('Content-Type', contentType);
       xhr.send(file);
     });
 
@@ -119,6 +140,7 @@ export const replaceVideo = async (
 ): Promise<void> => {
   try {
     const token = getAuthToken();
+    const contentType = resolveContentType(file);
 
     // Step 1: request presigned URL (server validates the file extension here)
     const presignRes = await authFetch(`${API_BASE_URL}/videos/${encodeURIComponent(key)}/replace/presigned-url`, {
@@ -127,7 +149,7 @@ export const replaceVideo = async (
         'Content-Type': 'application/json',
         ...(token && { 'Authorization': `Bearer ${token}` }),
       },
-      body: JSON.stringify({ filename: file.name, contentType: file.type }),
+      body: JSON.stringify({ filename: file.name, contentType }),
     });
 
     if (!presignRes.ok) {
@@ -158,7 +180,7 @@ export const replaceVideo = async (
       xhr.addEventListener('error', () => reject(new Error('Replace failed')));
 
       xhr.open('PUT', uploadUrl);
-      xhr.setRequestHeader('Content-Type', file.type);
+      xhr.setRequestHeader('Content-Type', contentType);
       xhr.send(file);
     });
 

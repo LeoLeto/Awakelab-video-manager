@@ -35,15 +35,34 @@ export const FolderManager = ({
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [searchQuery,     setSearchQuery]     = useState('');
 
-  // Helper function to get nesting level
-  const getNestingLevel = (folderPath: string) => {
-    return folderPath.split('/').length - 1;
+  // Closest ancestor that is actually present in the visible folder list
+  // (parents may be filtered out by directory-access permissions).
+  const getVisibleAncestor = (folderPath: string): string | null => {
+    const parts = folderPath.split('/');
+    for (let i = parts.length - 1; i > 0; i--) {
+      const ancestorPath = parts.slice(0, i).join('/');
+      if (folders.includes(ancestorPath)) return ancestorPath;
+    }
+    return null;
   };
 
-  // Helper function to get display name (last part of path)
-  const getDisplayName = (folderPath: string) => {
+  // Nesting level relative to visible ancestors (so orphaned subfolders sit at depth 0).
+  const getNestingLevel = (folderPath: string) => {
     const parts = folderPath.split('/');
-    return parts[parts.length - 1];
+    let level = 0;
+    for (let i = 1; i < parts.length; i++) {
+      const ancestorPath = parts.slice(0, i).join('/');
+      if (folders.includes(ancestorPath)) level++;
+    }
+    return level;
+  };
+
+  // Display name shows path from the closest visible ancestor down to the leaf;
+  // if no ancestor is visible (orphan), show the full path so the folder isn't ambiguous.
+  const getDisplayName = (folderPath: string) => {
+    const ancestor = getVisibleAncestor(folderPath);
+    if (ancestor) return folderPath.slice(ancestor.length + 1);
+    return folderPath;
   };
 
   // Helper function to check if folder should be visible
@@ -58,9 +77,11 @@ export const FolderManager = ({
     }
     if (KEEP_ALL_EXPANDED) return true;
     const parts = folderPath.split('/');
+    // Only enforce collapsed state for ancestors actually present in the folder list.
+    // Ancestors filtered out by permissions shouldn't hide their descendants.
     for (let i = 1; i < parts.length; i++) {
       const ancestorPath = parts.slice(0, i).join('/');
-      if (!expandedFolders.has(ancestorPath)) return false;
+      if (folders.includes(ancestorPath) && !expandedFolders.has(ancestorPath)) return false;
     }
     return true;
   };
