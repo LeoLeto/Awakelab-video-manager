@@ -631,44 +631,49 @@ mark.folder-search-highlight {
 }
 
 .folder-delete-confirm {
-  display: flex;
-  gap    : 0.25rem;
+  position     : absolute;
+  top          : 50%;
+  right        : 0.5rem;
+  transform    : translateY(-50%);
+  display      : flex;
+  align-items  : center;
+  gap          : 0.4rem;
+  background   : #5db1b8;
+  border-radius: 6px;
+  padding      : 0.25rem 0.4rem;
+  box-shadow   : 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .folder-confirm-btn,
 .folder-cancel-btn {
-  background   : transparent;
   border       : none;
   cursor       : pointer;
-  padding      : 0.25rem 0.5rem;
-  font-size    : 0.9rem;
+  padding      : 0.2rem 0.55rem;
+  font-size    : 0.75rem;
   border-radius: 4px;
-  transition   : background 0.2s;
-  font-weight  : bold;
+  font-weight  : 600;
+  color        : white;
+  display      : flex;
+  align-items  : center;
+  gap          : 0.2rem;
+  transition   : filter 0.15s;
+  white-space  : nowrap;
 }
 
 .folder-confirm-btn {
-  color: #4caf50;
+  background: #2e7d32;
 }
 
 .folder-confirm-btn:hover {
-  background: rgba(76, 175, 80, 0.1);
+  filter: brightness(1.15);
 }
 
 .folder-cancel-btn {
-  color: #f44336;
+  background: #c62828;
 }
 
 .folder-cancel-btn:hover {
-  background: rgba(244, 67, 54, 0.1);
-}
-
-.folder-item.active .folder-confirm-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.folder-item.active .folder-cancel-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  filter: brightness(1.15);
 }
 
 /* Main Content */

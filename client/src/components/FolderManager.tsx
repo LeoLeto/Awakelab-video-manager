@@ -143,14 +143,18 @@ export const FolderManager = ({
     e.stopPropagation();
     if (folder === 'Uncategorized' || folder === 'Recycle Bin') return;
     setRenamingFolder(folder);
-    setRenameValue(folder);
+    setRenameValue(folder.split('/').pop() || folder);
   };
 
   const handleRename = async (oldName: string) => {
-    if (renameValue.trim() && renameValue !== oldName && !renamingInProgress) {
+    const leafName = renameValue.trim();
+    const parentPath = oldName.includes('/') ? oldName.split('/').slice(0, -1).join('/') : '';
+    const newFullName = parentPath ? `${parentPath}/${leafName}` : leafName;
+    const oldLeafName = oldName.split('/').pop() || oldName;
+    if (leafName && leafName !== oldLeafName && !renamingInProgress) {
       setRenamingInProgress(true);
       try {
-        await onRenameFolder(oldName, renameValue.trim());
+        await onRenameFolder(oldName, newFullName);
         setRenamingFolder(null);
         setRenameValue('');
       } finally {
@@ -317,13 +321,13 @@ export const FolderManager = ({
                             className="folder-confirm-btn"
                             onClick={(e) => handleConfirmDelete(folder, e)}
                           >
-                            ✓
+                            ✓ Confirmar
                           </button>
                           <button
                             className="folder-cancel-btn"
-                            onClick={handleCancelDelete}
+                            onClick={(e) => handleCancelDelete(e)}
                           >
-                            ✕
+                            ✕ Cancelar
                           </button>
                         </div>
                       ) : (
